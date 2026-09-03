@@ -46,7 +46,7 @@ class OpReadSpellbookIndex(private val useListItem: Boolean) : ConstMediaAction 
                 else -> throw MishapBadBlock.of(pos, "splicing_table_or_focus_holder")
             }
 
-            if (!stack.`is`(HexItems.SPELLBOOK) || ItemSpellbook.arePagesEmpty(stack)) {
+            if (!stack.`is`(HexItems.SPELLBOOK.get()) || ItemSpellbook.arePagesEmpty(stack)) {
                 throw MishapBadBlock.of(pos, notSpellbookMishap)
             }
 

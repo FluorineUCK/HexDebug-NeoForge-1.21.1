@@ -1,8 +1,12 @@
 package gay.`object`.hexdebug.blocks.splicing
 
+import com.mojang.serialization.Codec
+import com.mojang.serialization.MapCodec
+import com.mojang.serialization.codecs.RecordCodecBuilder
 import gay.`object`.hexdebug.registry.HexDebugBlockEntities
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.core.component.DataComponents
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.Containers
 import net.minecraft.world.InteractionHand
@@ -48,20 +52,21 @@ class SplicingTableBlock(properties: Properties, val enlightened: Boolean) : Bas
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState) = SplicingTableBlockEntity(pos, state)
 
+    override fun codec(): MapCodec<out BaseEntityBlock> = CODEC
+
     override fun getRenderShape(state: BlockState) = RenderShape.MODEL
 
     override fun setPlacedBy(level: Level, pos: BlockPos, state: BlockState, placer: LivingEntity?, stack: ItemStack) {
-        if (stack.hasCustomHoverName()) {
+        if (stack.has(DataComponents.CUSTOM_NAME)) {
             getBlockEntity(level, pos)?.customName = stack.hoverName
         }
     }
 
-    override fun use(
+    override fun useWithoutItem(
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
-        hand: InteractionHand,
         hit: BlockHitResult
     ): InteractionResult {
         if (!level.isClientSide) {
@@ -109,6 +114,13 @@ class SplicingTableBlock(properties: Properties, val enlightened: Boolean) : Bas
     private fun getBlockEntity(level: Level, pos: BlockPos) = level.getBlockEntity(pos) as? SplicingTableBlockEntity
 
     companion object {
+        val CODEC: MapCodec<SplicingTableBlock> = RecordCodecBuilder.mapCodec { instance ->
+            instance.group(
+                propertiesCodec<SplicingTableBlock>(),
+                Codec.BOOL.fieldOf("enlightened").forGetter(SplicingTableBlock::enlightened),
+            ).apply(instance, ::SplicingTableBlock)
+        }
+
         val FACING: DirectionProperty = BlockStateProperties.HORIZONTAL_FACING
         val IMBUED: BooleanProperty = BooleanProperty.create("imbued")
     }

@@ -17,7 +17,7 @@ operator fun JsonObject.contains(memberName: String) = has(memberName)
 
 fun JsonObject.getAsResourceLocation(memberName: String, fallback: ResourceLocation? = null): ResourceLocation {
     return try {
-        ResourceLocation(GsonHelper.getAsString(this, memberName))
+        ResourceLocation.parse(GsonHelper.getAsString(this, memberName))
     } catch (e: Exception) {
         fallback ?: throw e
     }

@@ -3,7 +3,6 @@ package gay.`object`.hexdebug.items
 import at.petrak.hexcasting.api.casting.iota.Iota
 import at.petrak.hexcasting.api.item.IotaHolderItem
 import at.petrak.hexcasting.api.utils.asTranslatedComponent
-import at.petrak.hexcasting.api.utils.getList
 import gay.`object`.hexdebug.HexDebug
 import gay.`object`.hexdebug.blocks.focusholder.FocusHolderBlockEntity
 import gay.`object`.hexdebug.items.base.ItemPredicateProvider
@@ -12,6 +11,8 @@ import gay.`object`.hexdebug.registry.HexDebugBlockEntities
 import gay.`object`.hexdebug.utils.asItemPredicate
 import gay.`object`.hexdebug.utils.isNotEmpty
 import gay.`object`.hexdebug.utils.styledHoverName
+import net.minecraft.core.RegistryAccess
+import net.minecraft.core.component.DataComponents
 import net.minecraft.core.NonNullList
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag
@@ -22,22 +23,22 @@ import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.ClickAction
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.BlockItem
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
-import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 
 class FocusHolderBlockItem(block: Block, properties: Properties) :
     BlockItem(block, properties), IotaHolderItem, ItemPredicateProvider
 {
-    override fun readIotaTag(stack: ItemStack): CompoundTag? {
+    override fun readIota(stack: ItemStack): Iota? {
         val (iotaStack, iotaHolder) = stack.getIotaStack()
-        return iotaHolder?.readIotaTag(iotaStack)
+        return iotaHolder?.readIota(iotaStack)
     }
 
     override fun writeable(stack: ItemStack): Boolean {
-        val (_, iotaHolder) = stack.getIotaStack()
-        return iotaHolder?.writeable(stack) ?: false
+        val (iotaStack, iotaHolder) = stack.getIotaStack()
+        return iotaHolder?.writeable(iotaStack) ?: false
     }
 
     override fun canWrite(stack: ItemStack, iota: Iota?): Boolean {
@@ -55,7 +56,7 @@ class FocusHolderBlockItem(block: Block, properties: Properties) :
 
     override fun appendHoverText(
         stack: ItemStack,
-        level: Level?,
+        context: Item.TooltipContext,
         tooltipComponents: MutableList<Component>,
         isAdvanced: TooltipFlag
     ) {
@@ -123,7 +124,7 @@ class FocusHolderBlockItem(block: Block, properties: Properties) :
         val HAS_ITEM = HexDebug.id("has_item")
 
         val ItemStack.hasIotaStack get() = getBlockEntityData(this)
-            ?.getList("Items", Tag.TAG_COMPOUND)
+            ?.getList("Items", Tag.TAG_COMPOUND.toInt())
             ?.let { it.size > 0 }
             ?: false
 
@@ -131,7 +132,7 @@ class FocusHolderBlockItem(block: Block, properties: Properties) :
             val blockEntityTag = getBlockEntityData(this) ?: CompoundTag()
 
             val containerStacks = NonNullList.withSize(1, ItemStack.EMPTY)
-            ContainerHelper.loadAllItems(blockEntityTag, containerStacks)
+            ContainerHelper.loadAllItems(blockEntityTag, containerStacks, RegistryAccess.EMPTY)
 
             val iotaStack = containerStacks.first()
             return Pair(iotaStack, iotaStack.item as? IotaHolderItem)
@@ -142,11 +143,14 @@ class FocusHolderBlockItem(block: Block, properties: Properties) :
                 CompoundTag()
             } else {
                 val containerStacks = NonNullList.of(ItemStack.EMPTY, iotaStack)
-                ContainerHelper.saveAllItems(getBlockEntityData(this) ?: CompoundTag(), containerStacks)
+                ContainerHelper.saveAllItems(getBlockEntityData(this) ?: CompoundTag(), containerStacks, RegistryAccess.EMPTY)
             }
 
             setBlockEntityData(this, HexDebugBlockEntities.FOCUS_HOLDER.value, tag)
             return this
         }
+
+        private fun getBlockEntityData(stack: ItemStack): CompoundTag? =
+            stack.get(DataComponents.BLOCK_ENTITY_DATA)?.copyTag()
     }
 }

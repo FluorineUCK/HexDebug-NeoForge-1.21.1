@@ -2,6 +2,8 @@ package gay.`object`.hexdebug.networking.msg
 
 import at.petrak.hexcasting.api.casting.eval.ExecutionClientView
 import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType
+import gay.`object`.hexdebug.hexcompat.deserializeIota
+import gay.`object`.hexdebug.hexcompat.serializeIota
 import net.minecraft.network.FriendlyByteBuf
 
 /**
@@ -17,8 +19,8 @@ data class MsgEvaluatorClientInfoS2C(val threadId: Int?, val info: ExecutionClie
             info = ExecutionClientView(
                 isStackClear = buf.readBoolean(),
                 resolutionType = buf.readEnum(ResolvedPatternType::class.java),
-                stackDescs = buf.readList(FriendlyByteBuf::readNbt).filterNotNull(),
-                ravenmind = buf.readNullable(FriendlyByteBuf::readNbt),
+                stackDescs = buf.readList(FriendlyByteBuf::readNbt).mapNotNull { it?.let(::deserializeIota) },
+                ravenmind = buf.readNullable(FriendlyByteBuf::readNbt)?.let(::deserializeIota),
             ),
         )
 
@@ -27,8 +29,10 @@ data class MsgEvaluatorClientInfoS2C(val threadId: Int?, val info: ExecutionClie
             info.apply {
                 buf.writeBoolean(isStackClear)
                 buf.writeEnum(resolutionType)
-                buf.writeCollection(stackDescs, FriendlyByteBuf::writeNbt)
-                buf.writeNullable(ravenmind, FriendlyByteBuf::writeNbt)
+                buf.writeCollection(stackDescs) { packetBuf, iota -> packetBuf.writeNbt(serializeIota(iota)) }
+                buf.writeNullable(ravenmind) { packetBuf, iota ->
+                    packetBuf.writeNbt(serializeIota(iota))
+                }
             }
         }
     }

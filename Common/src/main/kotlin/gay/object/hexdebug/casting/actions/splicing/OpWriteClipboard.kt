@@ -31,9 +31,7 @@ object OpWriteClipboard : SpellAction {
             throw MishapBadBlock.of(pos, "splicing_table.clipboard.write")
         }
 
-        MishapOthersName.getTrueNameFromDatum(datum, null)?.let {
-            throw MishapOthersName(it)
-        }
+        MishapOthersName.getTrueNameMishapFromDatum(env.world, datum, null)?.let { throw it }
 
         return SpellAction.Result(
             Spell(table, clipboardHolder, datum),

@@ -1,7 +1,5 @@
 package gay.`object`.hexdebug.debugger
 
-import at.petrak.hexcasting.api.HexAPI
-import at.petrak.hexcasting.api.casting.SpellList
 import at.petrak.hexcasting.api.casting.eval.*
 import at.petrak.hexcasting.api.casting.eval.sideeffects.OperatorSideEffect
 import at.petrak.hexcasting.api.casting.eval.vm.*
@@ -11,6 +9,7 @@ import at.petrak.hexcasting.api.casting.iota.*
 import at.petrak.hexcasting.api.casting.mishaps.Mishap
 import at.petrak.hexcasting.api.casting.mishaps.MishapInternalException
 import at.petrak.hexcasting.api.casting.mishaps.MishapStackSize
+import at.petrak.hexcasting.api.utils.TreeList
 import at.petrak.hexcasting.common.casting.actions.eval.OpEval
 import at.petrak.hexcasting.common.lib.hex.HexEvalSounds
 import gay.`object`.hexdebug.casting.eval.FrameBreakpoint
@@ -117,8 +116,8 @@ class HexDebugger(
 
     private fun getFirstIotaMetadata(frame: ContinuationFrame) =
         getIotas(frame)
-            ?.takeIf { it.nonEmpty }
-            ?.let { it.car to iotaMetadata[it.car] }
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { it.head() to iotaMetadata[it.head()] }
 
     // current continuation is last
     private fun getCallStack(current: SpellContinuation) = generateSequence(current as? NotDone) {
@@ -230,9 +229,10 @@ class HexDebugger(
             is FrameForEach -> sequenceOf(
                 toVariable("Code", frame.code, sourceLine),
                 toVariable("Data", frame.data),
-                frame.baseStack?.let { toVariable("BaseStack", it) },
+                toVariable("ContextStack", frame.contextStack),
+                toVariable("StashedStack", frame.stashedStack),
                 toVariable("Result", frame.acc),
-            ).filterNotNull()
+            )
 
             is FrameBreakpoint -> sequenceOf(
                 toVariable("StopBefore", frame.stopBefore.toString()),
@@ -245,14 +245,7 @@ class HexDebugger(
         }
     }
 
-    private fun getRavenmind(): Iota {
-        val env = env
-        return if (env != null && image.userData.contains(HexAPI.RAVENMIND_USERDATA)) {
-            IotaType.deserialize(image.userData.getCompound(HexAPI.RAVENMIND_USERDATA), env.world)
-        } else {
-            NullIota()
-        }
-    }
+    private fun getRavenmind(): Iota = image.ravenmind().orElse(NullIota())
 
     private fun toVariables(iotas: Iterable<Iota>) = toVariables(iotas.asSequence())
 
@@ -267,7 +260,7 @@ class HexDebugger(
             is ListIota -> {
                 value = "(${iota.list.count()}) ${iotaToString(iota)}"
                 variablesReference = allocateVariables(iota.list)
-                indexedVariables = iota.list.size()
+                indexedVariables = iota.list.size
             }
 
             is ContinuationIota -> getContinuationVariable(iota.continuation).also {
@@ -324,10 +317,11 @@ class HexDebugger(
         }
     }
 
-    fun generateDescs() = getVM()?.generateDescs()
+    fun generateDescs() = getVM()?.let { image.stack to image.ravenmind().orElse(null) }
 
     private fun getClientView(vm: CastingVM): ExecutionClientView {
-        val (stackDescs, ravenmind) = vm.generateDescs()
+        val stackDescs = image.stack
+        val ravenmind = image.ravenmind().orElse(null)
         val isStackClear = nextContinuation is Done // only close the window if we're done evaluating
         return ExecutionClientView(isStackClear, lastResolutionType, stackDescs, ravenmind)
     }
@@ -335,7 +329,7 @@ class HexDebugger(
     /**
      * Use [DebugAdapter.evaluate][gay.object.hexdebug.adapter.DebugAdapter.evaluate] instead.
      */
-    internal fun evaluate(list: SpellList): DebugStepResult? {
+    internal fun evaluate(list: TreeList<Iota>): DebugStepResult? {
         val vm = getVM() ?: return null
         (vm.env as IDebugEnvAccessor).`debugEnv$hexdebug` = debugEnv
 
@@ -343,7 +337,7 @@ class HexDebugger(
             // manually trigger the mishap sound
             // TODO: this feels scuffed.
             vm.env.postExecution(
-                CastResult(NullIota(), nextContinuation, null, listOf(), lastResolutionType, HexEvalSounds.MISHAP)
+                CastResult(NullIota(), nextContinuation, null, listOf(), lastResolutionType, HexEvalSounds.MISHAP.get())
             )
             return DebugStepResult(StopReason.EXCEPTION, clientInfo = getClientView(vm))
         }
@@ -400,7 +394,7 @@ class HexDebugger(
                 lastIota?.let { it to iotaMetadata[it]?.copy(columnIndex = columnIndex) }
             }
         }
-        nextContinuation = newContinuation.pushFrame(FrameEvaluate(SpellList.LList(0, iotas), false))
+        nextContinuation = newContinuation.pushFrame(FrameEvaluate(TreeList.from(iotas), false))
 
         val newSource = registerNewSource(iotas)
 
@@ -530,7 +524,7 @@ class HexDebugger(
                         newData = null,
                         sideEffects = listOf(OperatorSideEffect.DoMishap(MishapStackSize(), Mishap.Context(null, null))),
                         resolutionType = ResolvedPatternType.ERRORED,
-                        sound = HexEvalSounds.MISHAP,
+                        sound = HexEvalSounds.MISHAP.get(),
                     )
                 } else {
                     result

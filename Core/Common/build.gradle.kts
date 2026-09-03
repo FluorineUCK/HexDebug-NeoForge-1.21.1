@@ -3,13 +3,16 @@
 
 plugins {
     id("hexdebug.conventions.architectury")
-    id("hexdebug.conventions.dokka")
 }
 
 architectury {
-    common("fabric", "forge")
+    common("neoforge") {
+        platformPackage("neoforge", "forge")
+    }
 }
 
+val hexcastingNeoForgeJar = rootProject.file("libs/hexcasting-neoforge-1.21.1-0.12.0-devel-pre-39.jar")
+
 dependencies {
-    modApi(libs.hexcasting.common)
+    compileOnly(files(hexcastingNeoForgeJar))
 }

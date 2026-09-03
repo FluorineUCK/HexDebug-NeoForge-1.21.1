@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "hexdebug_core"
+version = "${modVersion}"
+displayName = "HexDebug Core"
+authors = "object-Object"
+description = "Core classes for integrating with HexDebug."
+
+[[dependencies.hexdebug_core]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${versions.neoforge_dependency},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug_core]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${versions.minecraft},1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug_core]]
+modId = "hexcasting"
+type = "required"
+versionRange = "[0.12.0-devel-pre-35,)"
+ordering = "NONE"
+side = "BOTH"

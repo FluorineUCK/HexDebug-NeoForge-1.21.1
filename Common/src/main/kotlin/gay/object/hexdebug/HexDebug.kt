@@ -38,5 +38,5 @@ object HexDebug {
     }
 
     @JvmStatic
-    fun id(path: String) = ResourceLocation(MODID, path)
+    fun id(path: String) = ResourceLocation.fromNamespaceAndPath(MODID, path)
 }

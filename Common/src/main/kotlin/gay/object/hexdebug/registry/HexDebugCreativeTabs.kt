@@ -15,6 +15,11 @@ object HexDebugCreativeTabs : HexDebugRegistrar<CreativeModeTab>(
         displayItems { _, output ->
             output.accept(HexDebugItems.DEBUGGER.value.defaultInstance)
             output.accept(HexDebugItems.QUENCHED_DEBUGGER.value.defaultInstance)
+            output.accept(HexDebugItems.EVALUATOR.value.defaultInstance)
+            output.accept(HexDebugItems.QUENCHED_EVALUATOR.value.defaultInstance)
+            output.accept(HexDebugBlocks.SPLICING_TABLE.item.defaultInstance)
+            output.accept(HexDebugBlocks.ENLIGHTENED_SPLICING_TABLE.item.defaultInstance)
+            output.accept(HexDebugBlocks.FOCUS_HOLDER.item.defaultInstance)
         }
     }
 

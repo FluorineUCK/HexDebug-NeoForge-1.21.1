@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "hexcasting:charged_amethyst"
+    },
+    "L": {
+      "item": "hexcasting:slate_block"
+    },
+    "U": {
+      "item": "hexcasting:slate_block"
+    }
+  },
+  "pattern": [
+    " CC",
+    " UC",
+    "L  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "hexdebug:evaluator"
+  },
+  "show_notification": true
+}

@@ -11,10 +11,12 @@ plugins {
 }
 
 repositories {
+    maven { url = uri(rootProject.file(".maven-artifacts/repository")) }
     mavenCentral()
     maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://squiddev.cc/maven") }
+    maven { url = uri("https://maven.neoforged.net/releases/") }
     maven { url = uri("https://maven.terraformersmc.com") }
     maven { url = uri("https://maven.terraformersmc.com/releases") }
     maven { url = uri("https://maven.shedaniel.me") }
@@ -24,6 +26,7 @@ repositories {
     maven { url = uri("https://maven.ladysnake.org/releases") }
     maven { url = uri("https://thedarkcolour.github.io/KotlinForForge") }
     maven { url = uri("https://maven.theillusivec4.top") }
+    maven { url = uri("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven") }
     maven { url = uri("https://maven.parchmentmc.org") }
     maven { url = uri("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1") }
     maven { url = uri("https://maven.kosmx.dev/") }

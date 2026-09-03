@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer
 fun HexDebugMessageC2S.applyOnServer(ctx: PacketContext) = ctx.queue {
     val player = ctx.player as ServerPlayer
     when (this) {
-        is MsgDebugAdapterProxy -> {
+        is MsgDebugAdapterProxyC2S -> {
             DebugAdapterManager[ctx.player]?.launcher?.handleMessage(content)
         }
 

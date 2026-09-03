@@ -1,4 +1,5 @@
 import hexdebug.utils.kotlinForgeRuntimeLibrary
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("hexdebug.conventions.platform")
@@ -6,19 +7,18 @@ plugins {
 }
 
 architectury {
-    forge()
+    neoForge {
+        platformPackage = "forge"
+    }
+}
+
+kotlin {
+    sourceSets.named("main") {
+        kotlin.exclude("gay/object/hexdebug/forge/datagen/**")
+    }
 }
 
 loom {
-    forge {
-        convertAccessWideners = true
-        extraAccessWideners.add(loom.accessWidenerPath.get().asFile.name)
-
-        mixinConfig(
-            "hexdebug-common.mixins.json",
-        )
-    }
-
     runs {
         for ((name, outputProject) in arrayOf(
             // we're using forge to do the common datagen because fabric's datagen kind of sucks
@@ -43,7 +43,7 @@ loom {
 }
 
 hexdebugModDependencies {
-    filesMatching.add("META-INF/mods.toml")
+    filesMatching.add("META-INF/neoforge.mods.toml")
 
     anyVersion = ""
     mapVersions {
@@ -52,37 +52,65 @@ hexdebugModDependencies {
     }
 }
 
-hexdebugPublishDependencies {
-    requires("architectury-api")
-    requires("cloth-config")
-    requires(curseforge = "hexcasting", modrinth = "hex-casting")
-    requires("ioticblocks")
+val hexcastingNeoForgeJar = rootProject.file("libs/hexcasting-neoforge-1.21.1-0.12.0-devel-pre-39.jar")
+val hexcastingNeoForgeRuntimeJar = rootProject.file("libs/hexcasting-neoforge-1.21.1-0.12.0-devel-pre-39.jar")
+val paucalNeoForgeJar = rootProject.file("libs/paucal-0.7.1-pre-27+1.21.1-neoforge.jar")
+val inlineNeoForgeJar = rootProject.file("libs/inline-1.21.1-1.2.2-neoforge-devruntime.jar")
+val caelusNeoForgeJar = rootProject.file("libs/caelus-neoforge-7.0.1+1.21.1.jar")
+val lsp4jRuntimeJars = files(
+    rootProject.file("libs/org.eclipse.lsp4j-0.23.0-unsigned.jar"),
+    rootProject.file("libs/org.eclipse.lsp4j.debug-0.23.0-unsigned.jar"),
+    rootProject.file("libs/org.eclipse.lsp4j.jsonrpc-0.23.0-unsigned.jar"),
+    rootProject.file("libs/org.eclipse.lsp4j.jsonrpc.debug-0.23.0-unsigned.jar"),
+)
 
-    requires("kotlin-for-forge")
+val enableTagProbe = providers.gradleProperty("hexdebugTagProbe").isPresent
+val enableRuntimeProbe = providers.gradleProperty("hexdebugRuntimeProbe").isPresent
+val enableClientProbe = providers.gradleProperty("hexdebugClientProbe").isPresent
 
-    optional("emi")
+loom {
+    if (enableTagProbe) {
+        runs.named("server") {
+            property("hexdebug.probe.validateTags", "true")
+        }
+    }
+    if (enableRuntimeProbe) {
+        runs.named("server") {
+            property("hexdebug.probe.validateRuntime", "true")
+        }
+    }
+    if (enableClientProbe) {
+        runs.named("client") {
+            property("hexdebug.probe.validateClient", "true")
+            property("hexdebug.probe.exitAfterClientStartup", "true")
+            programArgs("--quickPlaySingleplayer", "HexDebugProbePre2")
+        }
+    }
 }
 
 dependencies {
-    forge(libs.forge)
-    modApi(libs.architectury.forge)
+    neoForge(libs.neoforge)
+    modApi(libs.architectury.neoforge)
 
-    implementation(libs.kotlin.forge)
+    runtimeOnly(libs.kotlin.forge)
 
-    modApi(libs.hexcasting.forge) { isTransitive = false }
-    modImplementation(libs.paucal.forge)
-    modLocalRuntime(libs.patchouli.forge)
-    modLocalRuntime(libs.caelus)
-    modLocalRuntime(libs.inline.forge) { isTransitive = false }
+    compileOnly(files(hexcastingNeoForgeJar))
+    runtimeOnly(files(hexcastingNeoForgeRuntimeJar))
+    compileOnly(files(paucalNeoForgeJar))
+    runtimeOnly(files(paucalNeoForgeJar))
+    compileOnly(libs.patchouli.neoforge)
+    runtimeOnly(libs.patchouli.neoforge)
+    runtimeOnly(files(caelusNeoForgeJar))
+    runtimeOnly(files(inlineNeoForgeJar))
 
-    modApi(libs.clothConfig.forge)
+    modApi(libs.clothConfig.neoforge)
 
     libs.mixinExtras.common.also {
         compileOnly(it)
         annotationProcessor(it)
     }
 
-    libs.mixinExtras.forge.also {
+    libs.mixinExtras.neoforge.also {
         implementation(it)
         include(it)
     }
@@ -90,8 +118,11 @@ dependencies {
     libs.bundles.lsp4j.also {
         api(it)
         include(it)
-        forgeRuntimeLibrary(it)
     }
+
+    runtimeOnly(lsp4jRuntimeJars)
+    localRuntime(lsp4jRuntimeJars)
+    add("developmentNeoForge", lsp4jRuntimeJars)
 
     libs.bundles.ktor.also {
         implementation(it)
@@ -99,15 +130,13 @@ dependencies {
         kotlinForgeRuntimeLibrary(it)
     }
 
-    modLocalRuntime(libs.devAuth.forge)
-
-    modImplementation(libs.ioticblocks.forge)
-
-    libs.emi.forge.also {
+    libs.emi.neoforge.also {
         modCompileOnly(it)
-        modLocalRuntime(it)
+        runtimeOnly(it)
     }
 
-    forgeRuntimeLibrary(project(":hexdebug-core-common", "namedElements")) { isTransitive = false }
-    forgeRuntimeLibrary(project(":hexdebug-core-forge", "namedElements")) { isTransitive = false }
+}
+
+tasks.named<Jar>("shadowJar") {
+    exclude("gay/object/hexdebug/forge/probe/**")
 }

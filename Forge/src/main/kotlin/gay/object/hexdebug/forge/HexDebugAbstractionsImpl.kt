@@ -3,11 +3,17 @@
 package gay.`object`.hexdebug.forge
 
 import gay.`object`.hexdebug.registry.HexDebugRegistrar
-import net.minecraftforge.registries.RegisterEvent
-import thedarkcolour.kotlinforforge.forge.MOD_BUS
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.registries.RegisterEvent
+
+private lateinit var modBus: IEventBus
+
+fun initPlatformBus(bus: IEventBus) {
+    modBus = bus
+}
 
 fun <T : Any> initRegistry(registrar: HexDebugRegistrar<T>) {
-    MOD_BUS.addListener { event: RegisterEvent ->
+    modBus.addListener { event: RegisterEvent ->
         event.register(registrar.registryKey) { helper ->
             registrar.init(helper::register)
         }

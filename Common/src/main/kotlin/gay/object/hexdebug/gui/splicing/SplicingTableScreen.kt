@@ -409,12 +409,8 @@ class SplicingTableScreen(
 
                 override fun testVisible() = data.isEnlightened
 
-                override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
-                    active = canCastIgnoringCooldown && castingCooldown <= 0
-                    super.render(guiGraphics, mouseX, mouseY, partialTick)
-                }
-
                 override fun renderWidget(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+                    active = canCastIgnoringCooldown && castingCooldown <= 0
                     if (castingCooldown > 0) {
                         val (uOffset, vOffset) = when {
                             canCastIgnoringCooldown -> Pair(uOffset, vOffset)
@@ -422,7 +418,7 @@ class SplicingTableScreen(
                         }
                         blitSprite(guiGraphics, x, y, uOffset, vOffset, width, height)
 
-                        val cooldownPercent = ((castingCooldown - minecraft!!.frameTime) / maxCastingCooldown.toFloat()).coerceIn(0f, 1f)
+                        val cooldownPercent = ((castingCooldown - partialTick) / maxCastingCooldown.toFloat()).coerceIn(0f, 1f)
                         if (cooldownPercent > 0f) {
                             val minY = y + floor(height * (1f - cooldownPercent)).toInt()
                             val maxY = minY + ceil(height * cooldownPercent).toInt()
@@ -604,13 +600,13 @@ class SplicingTableScreen(
     }
 
     // TODO: limit scroll to certain regions? (let's see if anyone complains first)
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
-        if (super.mouseScrolled(mouseX, mouseY, delta)) return true
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, scrollX: Double, scrollY: Double): Boolean {
+        if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) return true
 
         val adjustedDelta = if (HexDebugClientConfig.config.splicingTable.invertScrollDirection) {
-            delta * -1
+            scrollY * -1
         } else {
-            delta
+            scrollY
         }
 
         val action = if (adjustedDelta > 0) {
@@ -631,7 +627,7 @@ class SplicingTableScreen(
 
         // hack: limit scrolls per tick to 4 (arbitrary) to prevent DoS
         // (this could be easily solved by adding a new packet, but lazy)
-        repeat(min(delta.absoluteValue.roundToInt(), 4)) {
+        repeat(min(scrollY.absoluteValue.roundToInt(), 4)) {
             menu.table.runAction(action, null)
         }
 
@@ -722,7 +718,7 @@ class SplicingTableScreen(
     }
 
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
-        renderBackground(guiGraphics)
+        renderBackground(guiGraphics, mouseX, mouseY, partialTick)
         super.render(guiGraphics, mouseX, mouseY, partialTick)
         renderTooltip(guiGraphics, mouseX, mouseY)
     }

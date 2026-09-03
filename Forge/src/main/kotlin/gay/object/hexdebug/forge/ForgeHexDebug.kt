@@ -1,41 +1,42 @@
 package gay.`object`.hexdebug.forge
 
-import at.petrak.hexcasting.forge.datagen.TagsProviderEFHSetter
-import dev.architectury.platform.forge.EventBuses
 import gay.`object`.hexdebug.HexDebug
-import gay.`object`.hexdebug.datagen.tags.HexDebugActionTags
-import gay.`object`.hexdebug.datagen.tags.HexDebugBlockTags
-import gay.`object`.hexdebug.datagen.tags.HexDebugItemTags
-import gay.`object`.hexdebug.forge.datagen.HexDebugBlockLootTables
-import gay.`object`.hexdebug.forge.datagen.HexDebugBlockModels
-import gay.`object`.hexdebug.forge.datagen.HexDebugItemModels
-import gay.`object`.hexdebug.forge.datagen.HexDebugRecipes
-import net.minecraft.data.DataProvider
-import net.minecraft.data.DataProvider.Factory
-import net.minecraft.data.PackOutput
-import net.minecraft.data.loot.LootTableProvider
-import net.minecraft.data.loot.LootTableProvider.SubProviderEntry
-import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets
-import net.minecraftforge.data.event.GatherDataEvent
-import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent
-import thedarkcolour.kotlinforforge.forge.MOD_BUS
+import net.neoforged.api.distmarker.Dist
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.fml.common.Mod
+import net.neoforged.fml.event.lifecycle.FMLDedicatedServerSetupEvent
+import net.neoforged.fml.loading.FMLEnvironment
 
 /**
  * This is your loading entrypoint on forge, in case you need to initialize
  * something platform-specific.
  */
 @Mod(HexDebug.MODID)
-class HexDebugForge {
+class HexDebugForge(bus: IEventBus) {
     init {
-        MOD_BUS.apply {
-            EventBuses.registerModEventBus(HexDebug.MODID, this)
-            addListener(ForgeHexDebugClient::init)
-            addListener(ForgeHexDebugClient::registerClientReloadListeners)
+        initPlatformBus(bus)
+        bus.apply {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                addListener(ForgeHexDebugClient::init)
+                addListener(ForgeHexDebugClient::registerClientReloadListeners)
+            }
             addListener(::initServer)
-            addListener(::gatherData)
         }
         HexDebug.init()
+        registerDevelopmentProbe(
+            "hexdebug.probe.validateTags",
+            "gay.object.hexdebug.forge.probe.HexDebugTagProbe",
+        )
+        registerDevelopmentProbe(
+            "hexdebug.probe.validateRuntime",
+            "gay.object.hexdebug.forge.probe.HexDebugRuntimeProbe",
+        )
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            registerDevelopmentProbe(
+                "hexdebug.probe.validateClient",
+                "gay.object.hexdebug.forge.probe.HexDebugClientProbe",
+            )
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -43,38 +44,18 @@ class HexDebugForge {
         HexDebug.initServer()
     }
 
-    private fun gatherData(event: GatherDataEvent) {
-        event.apply {
-            val efh = existingFileHelper
-            when ("true") {
-                System.getProperty("hexdebug.common-datagen") -> {
-                    addProvider(includeClient()) { HexDebugBlockModels(it, efh) }
-                    addProvider(includeClient()) { HexDebugItemModels(it, efh) }
-
-                    addProvider(includeServer()) { HexDebugRecipes(it) }
-                    addProvider(includeServer()) {
-                        LootTableProvider(it, setOf(), listOf(
-                            SubProviderEntry(::HexDebugBlockLootTables, LootContextParamSets.BLOCK),
-                        ))
-                    }
-                }
-
-                System.getProperty("hexdebug.forge-datagen") -> {
-                    addCommonProvider(includeServer()) { HexDebugActionTags(it, lookupProvider) }
-                    addCommonProvider(includeServer()) { HexDebugBlockTags(it, lookupProvider) }
-                    addCommonProvider(includeServer()) { HexDebugItemTags(it, lookupProvider) }
-                }
-            }
+    /**
+     * Keeps regression probes on the Loom development classpath without
+     * linking or shipping them in the production mod JAR.
+     */
+    private fun registerDevelopmentProbe(property: String, className: String) {
+        if (FMLEnvironment.production || !java.lang.Boolean.getBoolean(property)) {
+            return
+        }
+        try {
+            Class.forName(className).getMethod("register").invoke(null)
+        } catch (exception: ReflectiveOperationException) {
+            throw IllegalStateException("Unable to register development probe $className", exception)
         }
     }
 }
-
-private fun <T : DataProvider> GatherDataEvent.addProvider(run: Boolean, factory: (PackOutput) -> T) =
-    generator.addProvider(run, Factory { factory(it) })
-
-private fun <T : DataProvider> GatherDataEvent.addCommonProvider(run: Boolean, factory: (PackOutput) -> T) =
-    addProvider(run) { packOutput ->
-        factory(packOutput).also {
-            (it as TagsProviderEFHSetter).setEFH(existingFileHelper)
-        }
-    }

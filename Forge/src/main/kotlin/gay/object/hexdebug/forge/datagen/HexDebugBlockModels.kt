@@ -1,7 +1,7 @@
 package gay.`object`.hexdebug.forge.datagen
 
 import at.petrak.hexcasting.api.HexAPI
-import at.petrak.paucal.api.forge.datagen.PaucalBlockStateAndModelProvider
+import at.petrak.paucal.forge.api.datagen.PaucalBlockStateAndModelProvider
 import gay.`object`.hexdebug.HexDebug
 import gay.`object`.hexdebug.blocks.focusholder.FocusHolderBlock
 import gay.`object`.hexdebug.blocks.splicing.SplicingTableBlock
@@ -13,10 +13,10 @@ import net.minecraft.data.PackOutput
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
-import net.minecraftforge.client.model.generators.BlockModelBuilder
-import net.minecraftforge.client.model.generators.ConfiguredModel
-import net.minecraftforge.client.model.generators.VariantBlockStateBuilder
-import net.minecraftforge.common.data.ExistingFileHelper
+import net.neoforged.neoforge.client.model.generators.BlockModelBuilder
+import net.neoforged.neoforge.client.model.generators.ConfiguredModel
+import net.neoforged.neoforge.client.model.generators.VariantBlockStateBuilder
+import net.neoforged.neoforge.common.data.ExistingFileHelper
 
 @Suppress("SameParameterValue")
 class HexDebugBlockModels(output: PackOutput, efh: ExistingFileHelper) : PaucalBlockStateAndModelProvider(output, HexDebug.MODID, efh) {

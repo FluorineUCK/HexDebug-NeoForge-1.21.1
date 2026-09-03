@@ -26,7 +26,7 @@ import java.util.function.Consumer
 class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebug.MODID) {
     override fun buildRecipes(writer: Consumer<FinishedRecipe>) {
         // debugger
-        flyswatter(HexDebugItems.DEBUGGER, Items.GOLD_INGOT, HexItems.ARTIFACT)
+        flyswatter(HexDebugItems.DEBUGGER, Items.GOLD_INGOT, HexItems.ARTIFACT.get())
             .unlockedBy("has_item", hasItem(HexTags.Items.STAVES))
             .save(writer)
 
@@ -35,7 +35,7 @@ class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebu
             .save(writer)
 
         // evaluator
-        flyswatter(HexDebugItems.EVALUATOR, HexBlocks.SLATE_BLOCK)
+        flyswatter(HexDebugItems.EVALUATOR, HexBlocks.SLATE_BLOCK.get())
             .unlockedBy("has_item", hasItem(HexTags.Items.STAVES))
             .save(writer)
 
@@ -45,16 +45,16 @@ class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebu
 
         // splicing table
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, HexDebugBlocks.SPLICING_TABLE)
-            .define('P', HexBlocks.EDIFIED_PLANKS)
-            .define('C', HexItems.CHARGED_AMETHYST)
+            .define('P', HexBlocks.EDIFIED_PLANKS.get())
+            .define('C', HexItems.CHARGED_AMETHYST.get())
             .define('A', Items.AMETHYST_SHARD)
-            .define('F', HexItems.FOCUS)
-            .define('S', HexBlocks.SLATE_BLOCK)
+            .define('F', HexItems.FOCUS.get())
+            .define('S', HexBlocks.SLATE_BLOCK.get())
             .define('G', Items.GOLD_INGOT)
             .pattern("PCP")
             .pattern("AFA")
             .pattern("SGS")
-            .unlockedBy("has_item", hasItem(HexItems.FOCUS))
+            .unlockedBy("has_item", hasItem(HexItems.FOCUS.get()))
             .save(writer)
 
         // enlightened splicing table
@@ -69,25 +69,25 @@ class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebu
 
         // empty focus holder
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, HexDebugBlocks.FOCUS_HOLDER)
-            .define('S', HexBlocks.SLATE_BLOCK)
+            .define('S', HexBlocks.SLATE_BLOCK.get())
             .define('G', Items.GOLD_NUGGET)
             .pattern("GSG")
             .pattern("S S")
             .pattern("GSG")
-            .unlockedBy("has_item", hasItem(HexItems.FOCUS))
+            .unlockedBy("has_item", hasItem(HexItems.FOCUS.get()))
             .save(writer)
 
         // existing focus holder with new focus
-        FocusHolderFillingShapedRecipeBuilder(RecipeCategory.MISC, HexDebugBlocks.FOCUS_HOLDER, HexItems.FOCUS)
+        FocusHolderFillingShapedRecipeBuilder(RecipeCategory.MISC, HexDebugBlocks.FOCUS_HOLDER, HexItems.FOCUS.get())
             .define('G', Items.GLOWSTONE)
             .define('L', Items.LEATHER)
             .define('P', Items.PAPER)
-            .define('A', HexItems.CHARGED_AMETHYST)
+            .define('A', HexItems.CHARGED_AMETHYST.get())
             .define('H', HexDebugBlocks.FOCUS_HOLDER)
             .pattern("HL ")
             .pattern("PAP")
             .pattern(" LG")
-            .unlockedBy("has_item", hasItem(HexItems.FOCUS))
+            .unlockedBy("has_item", hasItem(HexItems.FOCUS.get()))
             .save(writer, HexDebug.id("focus_holder_filling_shaped/focus"))
     }
 
@@ -99,7 +99,7 @@ class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebu
         ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, result)
             .define('L', lowerHandle)
             .define('U', upperHandle)
-            .define('C', HexItems.CHARGED_AMETHYST)
+            .define('C', HexItems.CHARGED_AMETHYST.get())
             .pattern(" CC")
             .pattern(" UC")
             .pattern("L  ")
@@ -107,7 +107,7 @@ class HexDebugRecipes(output: PackOutput) : PaucalRecipeProvider(output, HexDebu
     private fun quenchedFlyswatter(result: ItemLike, flyswatter: ItemLike) =
         FlyswatterQuenchingShapedRecipeBuilder(RecipeCategory.TOOLS, result)
             .define('F', flyswatter)
-            .define('Q', HexItems.QUENCHED_SHARD)
+            .define('Q', HexItems.QUENCHED_SHARD.get())
             .pattern(" Q ")
             .pattern("QFQ")
             .pattern(" Q ")

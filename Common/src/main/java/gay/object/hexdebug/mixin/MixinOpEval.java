@@ -6,15 +6,15 @@ import at.petrak.hexcasting.api.casting.eval.OperationResult;
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage;
 import at.petrak.hexcasting.api.casting.eval.vm.SpellContinuation;
 import at.petrak.hexcasting.api.casting.iota.Iota;
+import at.petrak.hexcasting.api.utils.TreeList;
 import at.petrak.hexcasting.common.casting.actions.eval.OpEval;
+import com.mojang.datafixers.util.Either;
 import gay.object.hexdebug.core.api.HexDebugCoreAPI;
 import gay.object.hexdebug.core.api.debugging.DebugStepType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.List;
 
 @Mixin(OpEval.class)
 public abstract class MixinOpEval implements Action {
@@ -23,8 +23,8 @@ public abstract class MixinOpEval implements Action {
             CastingEnvironment env,
             CastingImage image,
             SpellContinuation continuation,
-            List<Iota> newStack,
-            Iota iota,
+            TreeList<Iota> newStack,
+            Either<Iota, TreeList<Iota>> instrs,
             CallbackInfoReturnable<OperationResult> cir
     ) {
         var debugEnv = HexDebugCoreAPI.INSTANCE.getDebugEnv(env);

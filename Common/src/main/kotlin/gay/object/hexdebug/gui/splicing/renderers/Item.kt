@@ -9,10 +9,12 @@ import gay.`object`.hexdebug.utils.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.commands.arguments.NbtPathArgument.NbtPath
+import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.util.GsonHelper
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.component.CustomData
 
 class ItemRendererProvider(
     val itemPath: NbtPath,
@@ -40,7 +42,7 @@ class ItemRendererProvider(
         val tag = tagPath?.getOrNull(data) as? CompoundTag
 
         val stack = ItemStack(item, count)
-        stack.tag = tag
+        tag?.let { stack.set(DataComponents.CUSTOM_DATA, CustomData.of(it.copy())) }
 
         return ItemRenderer(type, iota, x, y, stack)
     }

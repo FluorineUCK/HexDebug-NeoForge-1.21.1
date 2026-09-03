@@ -32,7 +32,7 @@ object HexDebugBlocks : HexDebugRegistrar<Block>(Registries.BLOCK, { BuiltInRegi
         itemBuilder = { FocusHolderBlockItem(it, HexDebugItems.props) },
     )
 
-    private val slateish get() = BlockProperties.copy(Blocks.DEEPSLATE_TILES).strength(4f, 4f)
+    private val slateish get() = BlockProperties.ofFullCopy(Blocks.DEEPSLATE_TILES).strength(4f, 4f)
 
     private fun BlockProperties.noPush() = pushReaction(PushReaction.BLOCK)
 

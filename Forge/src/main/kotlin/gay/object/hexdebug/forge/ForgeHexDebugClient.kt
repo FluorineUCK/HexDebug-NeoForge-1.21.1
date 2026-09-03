@@ -2,17 +2,17 @@ package gay.`object`.hexdebug.forge
 
 import gay.`object`.hexdebug.HexDebugClient
 import gay.`object`.hexdebug.resources.splicing.SplicingTableIotasResourceReloadListener
-import net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
-import thedarkcolour.kotlinforforge.forge.LOADING_CONTEXT
+import net.neoforged.fml.ModLoadingContext
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 
 object ForgeHexDebugClient {
     @Suppress("UNUSED_PARAMETER")
     fun init(event: FMLClientSetupEvent) {
         HexDebugClient.init()
-        LOADING_CONTEXT.registerExtensionPoint(ConfigScreenFactory::class.java) {
-            ConfigScreenFactory { _, parent -> HexDebugClient.getConfigScreen(parent) }
+        ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory::class.java) {
+            IConfigScreenFactory { _, parent -> HexDebugClient.getConfigScreen(parent) }
         }
     }
 

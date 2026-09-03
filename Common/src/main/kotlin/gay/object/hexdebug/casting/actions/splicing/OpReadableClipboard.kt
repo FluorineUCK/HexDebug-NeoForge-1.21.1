@@ -20,7 +20,7 @@ object OpReadableClipboard : ConstMediaAction {
         val clipboardHolder = table.clipboardHolder
             ?: return false.asActionResult
 
-        clipboardHolder.readIota(env.world)
+        clipboardHolder.readIota()
             ?: clipboardHolder.emptyIota()
             ?: return false.asActionResult
 

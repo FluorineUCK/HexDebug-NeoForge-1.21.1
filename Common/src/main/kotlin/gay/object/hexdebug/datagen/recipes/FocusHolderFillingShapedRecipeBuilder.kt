@@ -37,7 +37,8 @@ class FocusHolderFillingShapedRecipeBuilder(
         override fun serializeRecipeData(json: JsonObject) {
             inner.serializeRecipeData(json)
             json.add("result_inner", JsonObject().also {
-                it.addProperty("item", BuiltInRegistries.ITEM.getKey(resultInner.asItem()).toString())
+                it.addProperty("count", 1)
+                it.addProperty("id", BuiltInRegistries.ITEM.getKey(resultInner.asItem()).toString())
             })
         }
 

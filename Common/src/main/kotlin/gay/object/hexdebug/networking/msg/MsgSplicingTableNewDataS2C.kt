@@ -6,6 +6,7 @@ import gay.`object`.hexdebug.splicing.SplicingTableClientView
 import gay.`object`.hexdebug.splicing.readSelection
 import gay.`object`.hexdebug.splicing.writeSelection
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.network.FriendlyByteBuf
 
 /** The result of running a splicing table action on the server. */
@@ -24,7 +25,7 @@ data class MsgSplicingTableNewDataS2C(
                     buf.readList {
                         SplicingTableIotaClientView(
                             buf.readNbt() ?: CompoundTag(),
-                            buf.readComponent(),
+                            buf.readJsonWithCodec(ComponentSerialization.CODEC),
                             buf.readUtf(),
                             buf.readInt(),
                             buf.readInt(),
@@ -48,7 +49,7 @@ data class MsgSplicingTableNewDataS2C(
                 buf.writeNullable(list) { _, list ->
                     buf.writeCollection(list) { _, it ->
                         buf.writeNbt(it.tag)
-                        buf.writeComponent(it.display)
+                        buf.writeJsonWithCodec(ComponentSerialization.CODEC, it.display)
                         buf.writeUtf(it.hexpatternSource)
                         buf.writeInt(it.index)
                         buf.writeInt(it.depth)

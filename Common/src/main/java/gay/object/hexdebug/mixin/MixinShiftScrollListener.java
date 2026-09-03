@@ -36,7 +36,7 @@ public abstract class MixinShiftScrollListener {
     }
 
     // TODO: the duplicated logic here feels nasty, but everything else I tried had issues with remapping
-    @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "onScroll(DZ)Z", at = @At("HEAD"), cancellable = true, remap = false)
     private static void hexdebug$preferOffhandIfNotDebugging(double delta, boolean needsSneaking, CallbackInfoReturnable<Boolean> cir) {
         var player = Minecraft.getInstance().player;
         if (

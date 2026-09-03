@@ -11,6 +11,7 @@ import gay.`object`.hexdebug.gui.splicing.SplicingTableScreen
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.gui.components.Tooltip
+import net.minecraft.client.gui.narration.NarratedElementType
 import net.minecraft.client.gui.narration.NarrationElementOutput
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.TextColor
@@ -33,6 +34,7 @@ class MediaBar(
     private val fullness get() = if (maxMedia > 0) media.toDouble() / maxMedia else 0.0
 
     override fun renderWidget(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+        updateMediaTooltip()
         if (media > 0 && maxMedia > 0) {
             val visibleHeight = ceil(height * fullness).toInt().coerceIn(0, height)
             val yOffset = height - visibleHeight
@@ -48,34 +50,40 @@ class MediaBar(
         }
     }
 
-    override fun updateTooltip() {
-        // stolen from ItemMediaHolder
-        // FIXME: i don't think this is the right way to do this :/
-        tooltip = if (maxMedia > 0) {
-            val color = TextColor.fromRgb(mediaBarColor(media, maxMedia))
-
-            val mediamount = DUST_AMOUNT.format(media.toDouble() / MediaConstants.DUST_UNIT)
-                .asTextComponent
-                .styledWith { it.withColor(HEX_COLOR) }
-
-            val percentFull = (PERCENTAGE.format(100f * fullness) + "%")
-                .asTextComponent
-                .styledWith { it.withColor(color) }
-
-            val maxCapacity = "hexcasting.tooltip.media"
-                .asTranslatedComponent(DUST_AMOUNT.format(maxMedia.toDouble() / MediaConstants.DUST_UNIT))
-                .styledWith { it.withColor(HEX_COLOR) }
-
-            Tooltip.create(
-                "hexcasting.tooltip.media_amount.advanced"
-                    .asTranslatedComponent(mediamount, maxCapacity, percentFull)
-            )
-        } else null
-        super.updateTooltip()
+    private fun updateMediaTooltip() {
+        setTooltip(mediaDescription()?.let { Tooltip.create(it) })
     }
 
-    // TODO: implement?
-    override fun updateWidgetNarration(narrationElementOutput: NarrationElementOutput) {}
+    private fun mediaDescription(): Component? {
+        if (maxMedia <= 0) {
+            return null
+        }
+
+        // stolen from ItemMediaHolder
+        // FIXME: i don't think this is the right way to do this :/
+        val color = TextColor.fromRgb(mediaBarColor(media, maxMedia))
+
+        val mediamount = DUST_AMOUNT.format(media.toDouble() / MediaConstants.DUST_UNIT)
+            .asTextComponent
+            .styledWith { it.withColor(HEX_COLOR) }
+
+        val percentFull = (PERCENTAGE.format(100f * fullness) + "%")
+            .asTextComponent
+            .styledWith { it.withColor(color) }
+
+        val maxCapacity = "hexcasting.tooltip.media"
+            .asTranslatedComponent(DUST_AMOUNT.format(maxMedia.toDouble() / MediaConstants.DUST_UNIT))
+            .styledWith { it.withColor(HEX_COLOR) }
+
+        return "hexcasting.tooltip.media_amount.advanced"
+            .asTranslatedComponent(mediamount, maxCapacity, percentFull)
+    }
+
+    override fun updateWidgetNarration(narrationElementOutput: NarrationElementOutput) {
+        mediaDescription()?.let {
+            narrationElementOutput.add(NarratedElementType.TITLE, it)
+        }
+    }
 }
 
 // stolen from ItemMediaHolder

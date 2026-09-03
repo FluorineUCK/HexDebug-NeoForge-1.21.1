@@ -9,17 +9,20 @@ import at.petrak.hexcasting.api.casting.iota.IotaType
 import at.petrak.hexcasting.api.utils.asTranslatedComponent
 import at.petrak.hexcasting.api.utils.black
 import at.petrak.hexcasting.common.lib.hex.HexEvalSounds
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.Tag
+import com.mojang.serialization.MapCodec
+import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.network.codec.StreamCodec
 
 /** An iota that terminates a debugging session if attempted to be executed. */
-class CognitohazardIota : Iota(TYPE, COGNITOHAZARD_SUBSTITUTE) {
+class CognitohazardIota : Iota({ TYPE }) {
     override fun isTruthy() = true
 
     override fun toleratesOther(that: Iota) = typesMatch(this, that)
 
-    override fun serialize() = CompoundTag()
+    override fun display() = DISPLAY
+
+    override fun hashCode() = 0xC096170
 
     override fun execute(vm: CastingVM, world: ServerLevel, continuation: SpellContinuation): CastResult {
         // we shouldn't need any special handling in here, since the cognitohazard should be detected by the debugger before we get to this point
@@ -29,23 +32,26 @@ class CognitohazardIota : Iota(TYPE, COGNITOHAZARD_SUBSTITUTE) {
             null,
             listOf(),
             ResolvedPatternType.EVALUATED,
-            HexEvalSounds.NOTHING,
+            HexEvalSounds.NOTHING.get(),
         )
     }
 
     override fun executable() = true
 
     companion object {
-        private val COGNITOHAZARD_SUBSTITUTE = Object()
-
         val DISPLAY = "hexdebug.tooltip.cognitohazard_iota".asTranslatedComponent.black
 
         val TYPE = object : IotaType<CognitohazardIota>() {
-            override fun deserialize(tag: Tag, world: ServerLevel) = CognitohazardIota()
+            override fun codec(): MapCodec<CognitohazardIota> = CODEC
 
-            override fun display(tag: Tag) = DISPLAY
+            override fun streamCodec(): StreamCodec<RegistryFriendlyByteBuf, CognitohazardIota> = STREAM_CODEC
 
             override fun color() = 0xff_000000.toInt()
         }
+
+        private val CODEC: MapCodec<CognitohazardIota> = MapCodec.unit(::CognitohazardIota)
+
+        private val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, CognitohazardIota> =
+            StreamCodec.unit(CognitohazardIota())
     }
 }

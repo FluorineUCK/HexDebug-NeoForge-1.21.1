@@ -5,6 +5,7 @@ import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaRendererParser
 import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaRendererProvider
 import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaRenderers
 import gay.`object`.hexdebug.api.splicing.SplicingTableIotaClientView
+import gay.`object`.hexdebug.hexcompat.iotaTypeFromTag
 import gay.`object`.hexdebug.utils.getAsNbtPath
 import gay.`object`.hexdebug.utils.getOrNull
 import net.minecraft.commands.arguments.NbtPathArgument.NbtPath
@@ -19,7 +20,7 @@ class SubIotaRendererProvider(private val path: NbtPath) : SplicingTableIotaRend
     ): SplicingTableIotaRenderer? {
         val data = iota.data ?: return null
         val subIotaTag = path.getOrNull(data)?.first() as? CompoundTag ?: return null
-        val subIotaType = IotaType.getTypeFromTag(subIotaTag) ?: return null
+        val subIotaType = iotaTypeFromTag(subIotaTag) ?: return null
         val provider = SplicingTableIotaRenderers.getProvider(subIotaType) ?: return null
         val subIota = SplicingTableIotaClientView.subIota(subIotaTag)
         return provider.createRenderer(subIotaType, subIota, x, y)

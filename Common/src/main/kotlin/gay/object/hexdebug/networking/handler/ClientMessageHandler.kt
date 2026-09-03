@@ -23,7 +23,7 @@ import net.minecraft.network.chat.Component
 
 fun HexDebugMessageS2C.applyOnClient(ctx: PacketContext) = ctx.queue {
     when (this) {
-        is MsgDebugAdapterProxy -> {
+        is MsgDebugAdapterProxyS2C -> {
             DebugProxyClient.instance?.consume(content)
         }
 
@@ -47,7 +47,7 @@ fun HexDebugMessageS2C.applyOnClient(ctx: PacketContext) = ctx.queue {
                 if (heldItem.item is EvaluatorItem && getThreadId(heldItem) == threadId) {
                     // just delegate to the existing handler instead of copying the functionality here
                     // we use an index of -1 because we don't want to update the resolution type of any patterns
-                    MsgNewSpellPatternS2C.handle(MsgNewSpellPatternS2C(info, -1))
+                    MsgNewSpellPatternS2C(info, -1).handle()
                 }
             }
         }
@@ -83,7 +83,7 @@ fun HexDebugMessageS2C.applyOnClient(ctx: PacketContext) = ctx.queue {
             val info = ExecutionClientView(false, resolutionType, listOf(), null)
             SplicingTableScreen.getInstance()?.guiSpellcasting?.recvServerUpdate(info, index)
 
-            val sound = if (resolutionType.success) HexEvalSounds.NORMAL_EXECUTE else HexEvalSounds.MISHAP
+            val sound = if (resolutionType.success) HexEvalSounds.NORMAL_EXECUTE.get() else HexEvalSounds.MISHAP.get()
             sound.sound?.let { ctx.player.playSound(it, 1f, 1f) }
         }
 

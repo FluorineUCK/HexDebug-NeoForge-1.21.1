@@ -7,6 +7,15 @@ plugins {
 }
 
 repositories {
+    maven { url = uri("../.maven-artifacts/repository") }
+    exclusiveContent {
+        forRepository {
+            mavenCentral()
+        }
+        filter {
+            includeGroupByRegex("org\\.jetbrains\\.kotlin.*")
+        }
+    }
     mavenCentral()
     gradlePluginPortal()
     maven { url = uri("https://maven.architectury.dev/") }
@@ -19,17 +28,12 @@ dependencies {
     // plugins
     // https://github.com/gradle/gradle/issues/15383#issuecomment-1855984127
     implementation(libs.plugins.kotlin.jvm.toLibrary())
-    implementation(libs.plugins.dokka.toLibrary())
     implementation(libs.plugins.architectury.toLibrary())
     implementation(libs.plugins.architectury.loom.toLibrary())
     implementation(libs.plugins.shadow.toLibrary())
-    implementation(libs.plugins.modPublish.toLibrary())
 
     // libraries used by script plugins
     implementation(libs.pkpcpbp)
-    implementation(libs.plantuml)
-    implementation(libs.kotlin.scripting.jvm)
-
     // https://stackoverflow.com/a/70878181
     // https://github.com/gradle/gradle/issues/15383
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))

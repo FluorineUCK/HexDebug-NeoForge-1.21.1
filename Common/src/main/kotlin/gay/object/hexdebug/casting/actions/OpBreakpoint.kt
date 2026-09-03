@@ -15,6 +15,6 @@ data class OpBreakpoint(val stopBefore: Boolean) : Action {
         continuation: SpellContinuation
     ): OperationResult {
         val newCont = continuation.pushFrame(FrameBreakpoint(stopBefore))
-        return OperationResult(image.withUsedOp(), listOf(), newCont, HexEvalSounds.NORMAL_EXECUTE)
+        return OperationResult(image.withUsedOp(), listOf(), newCont, HexEvalSounds.NORMAL_EXECUTE.get())
     }
 }

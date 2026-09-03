@@ -6,16 +6,15 @@ import at.petrak.hexcasting.api.addldata.ADMediaHolder
 import at.petrak.hexcasting.api.block.HexBlockEntity
 import at.petrak.hexcasting.api.casting.ParticleSpray
 import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType
-import at.petrak.hexcasting.api.casting.eval.SpecialPatterns
 import at.petrak.hexcasting.api.casting.eval.vm.CastingVM
 import at.petrak.hexcasting.api.casting.iota.Iota
-import at.petrak.hexcasting.api.casting.iota.IotaType
 import at.petrak.hexcasting.api.casting.iota.ListIota
 import at.petrak.hexcasting.api.casting.iota.PatternIota
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import at.petrak.hexcasting.api.mod.HexTags
 import at.petrak.hexcasting.api.pigment.FrozenPigment
 import at.petrak.hexcasting.api.utils.*
+import at.petrak.hexcasting.common.lib.hex.HexActions
 import at.petrak.hexcasting.xplat.IXplatAbstractions
 import gay.`object`.hexdebug.api.HexDebugTags
 import gay.`object`.hexdebug.api.splicing.SplicingTableIotaClientView
@@ -27,6 +26,8 @@ import gay.`object`.hexdebug.casting.eval.FakeCastEnv
 import gay.`object`.hexdebug.casting.eval.SplicingTableCastEnv
 import gay.`object`.hexdebug.config.HexDebugServerConfig
 import gay.`object`.hexdebug.gui.splicing.SplicingTableMenu
+import gay.`object`.hexdebug.hexcompat.deserializeIota
+import gay.`object`.hexdebug.hexcompat.serializeIota
 import gay.`object`.hexdebug.registry.HexDebugBlockEntities
 import gay.`object`.hexdebug.splicing.*
 import gay.`object`.hexdebug.utils.Option.None
@@ -36,8 +37,10 @@ import gay.`object`.hexdebug.utils.setPropertyIfChanged
 import gay.`object`.hexdebug.utils.sigsEqual
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
+import net.minecraft.nbt.NbtOps
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -119,7 +122,7 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     fun getList(level: ServerLevel) =
-        listHolder?.let { it.readIota(level) as? ListIota }?.list
+        listHolder?.let { it.readIota() as? ListIota }?.list
 
     // for use by actions
     // can't be called setSelection because that conflicts with the property setter
@@ -133,8 +136,8 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
         clampView(level)
     }
 
-    override fun loadModData(tag: CompoundTag) {
-        ContainerHelper.loadAllItems(tag, stacks)
+    override fun loadModData(tag: CompoundTag, provider: HolderLookup.Provider) {
+        ContainerHelper.loadAllItems(tag, stacks, provider)
         media = tag.getLong("media")
         selection = Selection.fromRawIndices(
             from = tag.getInt("selectionFrom", -1),
@@ -142,19 +145,27 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
         )
         viewStartIndex = tag.getInt("viewStartIndex")
         hexTag = tag.get("hex")?.asList
-        pigment = tag.get("pigment")?.asCompound?.let(FrozenPigment::fromNBT)
-        customNameInner = tag.get("CustomName")?.asString?.let(Component.Serializer::fromJson)
+        pigment = tag.get("pigment")?.let {
+            FrozenPigment.CODEC.parse(NbtOps.INSTANCE, it).result().orElse(null)
+        }
+        customNameInner = tag.get("CustomName")?.asString?.let {
+            Component.Serializer.fromJson(it, provider)
+        }
     }
 
-    override fun saveModData(tag: CompoundTag) {
-        ContainerHelper.saveAllItems(tag, stacks)
+    override fun saveModData(tag: CompoundTag, provider: HolderLookup.Provider) {
+        ContainerHelper.saveAllItems(tag, stacks, provider)
         tag.putLong("media", media)
         tag.putInt("selectionFrom", selection?.from ?: -1)
         tag.putInt("selectionTo", selection?.to ?: -1)
         tag.putInt("viewStartIndex", viewStartIndex)
         hexTag?.let { tag.put("hex", it) }
-        pigment?.let { tag.put("pigment", it.serializeToNBT()) }
-        customNameInner?.let { tag.putString("CustomName", Component.Serializer.toJson(it)) }
+        pigment?.let {
+            FrozenPigment.CODEC.encodeStart(NbtOps.INSTANCE, it).result().ifPresent { pigmentTag ->
+                tag.put("pigment", pigmentTag)
+            }
+        }
+        customNameInner?.let { tag.putString("CustomName", Component.Serializer.toJson(it, provider)) }
     }
 
     // MenuProvider
@@ -242,12 +253,12 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
         var depth = 0
         SplicingTableClientView(
             list = list?.mapIndexed { index, iota ->
-                if ((iota as? PatternIota)?.pattern.sigsEqual(SpecialPatterns.RETROSPECTION)) depth--
+                if ((iota as? PatternIota)?.pattern.sigsEqual(HexActions.CLOSE_PAREN.value().prototype)) depth--
                 val view = SplicingTableIotaClientView(iota, env, index, depth)
-                if ((iota as? PatternIota)?.pattern.sigsEqual(SpecialPatterns.INTROSPECTION)) depth++
+                if ((iota as? PatternIota)?.pattern.sigsEqual(HexActions.OPEN_PAREN.value().prototype)) depth++
                 view
             },
-            clipboard = clipboard?.let { IotaType.serialize(it) },
+            clipboard = clipboard?.let(::serializeIota),
             isListWritable = listWriter != null,
             isClipboardWritable = clipboardWriter != null,
             isEnlightened = enlightened,
@@ -433,11 +444,11 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     fun getHex(level: ServerLevel): List<Iota>? =
-        hexTag?.map { IotaType.deserialize(it.asCompound, level) }
+        hexTag?.mapNotNull { deserializeIota(it, level) }
 
     fun setHex(hex: List<Iota>?) {
         hexTag = hex?.asSequence()
-            ?.map { IotaType.serialize(it) }
+            ?.map(::serializeIota)
             ?.toCollection(ListTag())
     }
 
@@ -519,7 +530,7 @@ class SplicingTableBlockEntity(pos: BlockPos, state: BlockState) :
 
     // ADIotaHolder
 
-    override fun readIotaTag() = listHolder?.readIotaTag()
+    override fun readIota() = listHolder?.readIota()
 
     override fun writeIota(iota: Iota?, simulate: Boolean): Boolean {
         val success = listHolder?.writeIota(iota, simulate) ?: false

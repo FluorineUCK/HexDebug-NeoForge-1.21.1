@@ -5,6 +5,7 @@ import at.petrak.hexcasting.common.lib.hex.HexIotaTypes;
 import gay.object.hexdebug.api.splicing.SplicingTableIotaClientView;
 import gay.object.hexdebug.config.HexDebugClientConfig;
 import gay.object.hexdebug.gui.splicing.SplicingTableScreen;
+import gay.object.hexdebug.hexcompat.HexIotaCompat;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
@@ -112,12 +113,12 @@ public abstract class SplicingTableIotaRenderer {
     protected SplicingTableIotaTooltipBuilder buildTooltip() {
         Component name;
         if (
-            type == HexIotaTypes.PATTERN
+            type == HexIotaTypes.PATTERN.get()
             || HexDebugClientConfig.getConfig().getSplicingTable().getShowNestedPatternNames()
         ) {
             name = iota.display();
         } else {
-            name = type.display(iota.getData());
+            name = HexIotaCompat.displayIota(iota.tag());
         }
 
         var builder = new SplicingTableIotaTooltipBuilder(name)

@@ -29,9 +29,7 @@ object OpWriteEnlightenedHex : SpellAction {
             throw MishapBadBlock.of(pos, "splicing_table.enlightened")
         }
 
-        MishapOthersName.getTrueNameFromArgs(hex, null)?.let {
-            throw MishapOthersName(it)
-        }
+        MishapOthersName.getTrueNameMishapFromArgs(env.world, hex, null)?.let { throw it }
 
         return SpellAction.Result(
             Spell(table, hex),

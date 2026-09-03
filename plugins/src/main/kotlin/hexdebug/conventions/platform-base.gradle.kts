@@ -12,7 +12,11 @@ plugins {
 val commonProject: String by project
 val platform: String by project
 // hack: core-fabric -> fabric
-val platformCapitalized = platform.split("-").last().replaceFirstChar(Char::uppercase)
+val platformName = platform.split("-").last()
+val platformCapitalized = when (platformName) {
+    "neoforge" -> "NeoForge"
+    else -> platformName.replaceFirstChar(Char::uppercase)
+}
 
 loom {
     runs {

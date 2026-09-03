@@ -1,6 +1,5 @@
 package gay.`object`.hexdebug.adapter
 
-import at.petrak.hexcasting.api.casting.SpellList
 import at.petrak.hexcasting.api.casting.eval.CastingEnvironment
 import at.petrak.hexcasting.api.casting.eval.ExecutionClientView
 import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType
@@ -8,6 +7,7 @@ import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.casting.iota.Iota
 import at.petrak.hexcasting.api.casting.iota.PatternIota
 import at.petrak.hexcasting.api.casting.math.HexPattern
+import at.petrak.hexcasting.api.utils.TreeList
 import gay.`object`.hexdebug.HexDebug
 import gay.`object`.hexdebug.adapter.proxy.DebugProxyServerLauncher
 import gay.`object`.hexdebug.config.HexDebugServerConfig
@@ -189,9 +189,9 @@ class DebugAdapter(val player: ServerPlayer) : IDebugProtocolServer {
         evaluate(threadId, PatternIota(pattern))
 
     fun evaluate(threadId: Int, iota: Iota) =
-        evaluate(threadId, SpellList.LList(listOf(iota)))
+        evaluate(threadId, TreeList.from(listOf(iota)))
 
-    fun evaluate(threadId: Int, list: SpellList) =
+    fun evaluate(threadId: Int, list: TreeList<Iota>) =
         inRangeDebugger(threadId)?.let {
             val result = it.evaluate(list) ?: return null
             if (result.startedEvaluating) {

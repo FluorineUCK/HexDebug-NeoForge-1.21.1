@@ -1,22 +1,28 @@
 plugins {
     id("hexdebug.conventions.architectury")
-    id("hexdebug.conventions.dokka")
 }
 
 architectury {
-    common("fabric", "forge")
+    common("neoforge") {
+        platformPackage("neoforge", "forge")
+    }
 }
+
+kotlin {
+    sourceSets.named("main") {
+        kotlin.exclude("gay/object/hexdebug/datagen/**")
+    }
+}
+
+val hexcastingNeoForgeJar = rootProject.file("libs/hexcasting-neoforge-1.21.1-0.12.0-devel-pre-39.jar")
 
 dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(kotlin("reflect"))
 
-    // We depend on fabric loader here to use the fabric EnvType class and get the mixin dependencies
-    // Do NOT use other classes from fabric loader
-    modImplementation(libs.fabric.loader)
     modApi(libs.architectury)
 
-    modApi(libs.hexcasting.common)
+    compileOnly(files(hexcastingNeoForgeJar))
 
     modApi(libs.clothConfig.common)
 
@@ -28,8 +34,6 @@ dependencies {
     implementation(libs.bundles.lsp4j)
 
     implementation(libs.bundles.ktor)
-
-    modImplementation(libs.ioticblocks.common)
 
     modCompileOnly(libs.emi.xplat)
 

@@ -1,12 +1,12 @@
 package gay.`object`.hexdebug.gui.splicing.renderers
 
-import at.petrak.hexcasting.api.casting.eval.SpecialPatterns
 import at.petrak.hexcasting.api.casting.iota.IotaType
 import at.petrak.hexcasting.api.casting.iota.PatternIota
 import at.petrak.hexcasting.client.render.drawLineSeq
 import at.petrak.hexcasting.client.render.findDupIndices
 import at.petrak.hexcasting.client.render.getCenteredPattern
 import at.petrak.hexcasting.client.render.makeZappy
+import at.petrak.hexcasting.common.lib.hex.HexActions
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaBackgroundType
@@ -16,6 +16,7 @@ import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaTooltipBuilder
 import gay.`object`.hexdebug.api.splicing.SplicingTableIotaClientView
 import gay.`object`.hexdebug.config.HexDebugClientConfig
 import gay.`object`.hexdebug.gui.splicing.SplicingTableScreen
+import gay.`object`.hexdebug.hexcompat.deserializeIota
 import gay.`object`.hexdebug.utils.getWrapping
 import gay.`object`.hexdebug.utils.letPushPose
 import gay.`object`.hexdebug.utils.simpleString
@@ -28,7 +29,7 @@ class PatternRenderer(
     x: Int,
     y: Int,
 ) : SplicingTableIotaRenderer(type, iota, x, y) {
-    private val pattern = PatternIota.deserialize(iota.data).pattern
+    private val pattern = (deserializeIota(iota.tag) as PatternIota).pattern
 
     private val patternWidth = 16f
     private val patternHeight = 13f
@@ -54,7 +55,7 @@ class PatternRenderer(
 
     private val outer = if (
         HexDebugClientConfig.config.splicingTable.enableRainbowBrackets
-        && (pattern.sigsEqual(SpecialPatterns.INTROSPECTION) || pattern.sigsEqual(SpecialPatterns.RETROSPECTION))
+        && (pattern.sigsEqual(HexActions.OPEN_PAREN.value().prototype) || pattern.sigsEqual(HexActions.CLOSE_PAREN.value().prototype))
     ) {
         HexDebugClientConfig.config.splicingTable.rainbowBracketColors.getWrapping(iota.depth)
     } else {

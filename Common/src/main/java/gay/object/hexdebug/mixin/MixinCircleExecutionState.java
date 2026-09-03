@@ -7,8 +7,6 @@ import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv;
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import gay.object.hexdebug.core.api.HexDebugCoreAPI;
 import gay.object.hexdebug.core.api.debugging.DebuggableCircleComponent;
 import gay.object.hexdebug.debugger.circles.CircleDebugEnv;
@@ -29,13 +27,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
+import java.util.HashSet;
 
 @Mixin(CircleExecutionState.class)
 public abstract class MixinCircleExecutionState implements IMixinCircleExecutionState {
     @Shadow(remap = false)
     @Final
-    public List<BlockPos> reachedPositions;
+    public HashSet<BlockPos> reachedPositions;
     @Shadow
     public BlockPos currentPos;
     @Shadow
@@ -98,31 +96,6 @@ public abstract class MixinCircleExecutionState implements IMixinCircleExecution
         } else if (HexDebugCoreAPI.INSTANCE.getDebugEnv(caster, debugEnv$hexdebug.getSessionId()) == null) {
             cir.setReturnValue(false);
         }
-    }
-
-    @WrapOperation(
-        method = "tick",
-        at = @At(
-            value = "INVOKE",
-            target = "Ljava/util/List;add(Ljava/lang/Object;)Z",
-            ordinal = 0
-        ),
-        require = 0,
-        remap = false
-    )
-    private boolean hexdebug$maybeSkipAddingToReachedPositions(
-        List<Object> instance,
-        Object pos,
-        Operation<Boolean> original
-    ) {
-        if (
-            pos instanceof BlockPos
-            && !reachedPositions.isEmpty()
-            && reachedPositions.get(reachedPositions.size() - 1) == pos
-        ) {
-            return true;
-        }
-        return original.call(instance, pos);
     }
 
     @ModifyExpressionValue(

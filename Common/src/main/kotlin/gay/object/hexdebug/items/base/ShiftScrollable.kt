@@ -3,6 +3,8 @@ package gay.`object`.hexdebug.items.base
 import at.petrak.hexcasting.api.utils.*
 import gay.`object`.hexdebug.config.HexDebugServerConfig
 import gay.`object`.hexdebug.core.api.HexDebugCoreAPI
+import gay.`object`.hexdebug.utils.getInt
+import gay.`object`.hexdebug.utils.putInt
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack

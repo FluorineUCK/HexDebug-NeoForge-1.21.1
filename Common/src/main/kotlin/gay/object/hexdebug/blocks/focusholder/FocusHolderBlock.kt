@@ -1,14 +1,17 @@
 package gay.`object`.hexdebug.blocks.focusholder
 
+import com.mojang.serialization.MapCodec
 import gay.`object`.hexdebug.utils.isNotEmpty
 import net.minecraft.core.BlockPos
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.RenderShape
@@ -35,33 +38,36 @@ class FocusHolderBlock(properties: Properties) : BaseEntityBlock(properties) {
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState) = FocusHolderBlockEntity(pos, state)
 
+    override fun codec(): MapCodec<out BaseEntityBlock> = CODEC
+
     override fun getRenderShape(state: BlockState) = RenderShape.MODEL
 
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult
-    ): InteractionResult {
+    ): ItemInteractionResult {
         // don't insert/remove items if sneaking or using offhand
         if (player.isShiftKeyDown || hand == InteractionHand.OFF_HAND) {
-            return InteractionResult.PASS
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         }
 
-        val blockEntity = getBlockEntity(level, pos) ?: return InteractionResult.PASS
-        val heldItem = player.getItemInHand(hand)
+        val blockEntity = getBlockEntity(level, pos) ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val heldItem = stack
         val storedItem = blockEntity.iotaStack
 
-        fun swapItem(): InteractionResult {
+        fun swapItem(): ItemInteractionResult {
             if (!level.isClientSide) {
                 player.setItemInHand(hand, storedItem)
                 blockEntity.iotaStack = heldItem
                 // TODO: there's probably a way to not send two events here
                 blockEntity.sync()
             }
-            return InteractionResult.sidedSuccess(level.isClientSide)
+            return ItemInteractionResult.sidedSuccess(level.isClientSide)
         }
 
         return if (FocusHolderBlockEntity.isValidItem(heldItem)) {
@@ -69,34 +75,56 @@ class FocusHolderBlock(properties: Properties) : BaseEntityBlock(properties) {
             swapItem()
         } else if (heldItem.isNotEmpty) {
             // main hand has invalid item, use it
-            InteractionResult.PASS
-        } else if (storedItem.isNotEmpty) {
-            // block has stored item, take it
-            swapItem()
+            ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         } else {
-            // block and hand are empty, try other hand
+            ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        }
+    }
+
+    override fun useWithoutItem(
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        player: Player,
+        hit: BlockHitResult
+    ): InteractionResult {
+        if (player.isShiftKeyDown) {
+            return InteractionResult.PASS
+        }
+
+        val blockEntity = getBlockEntity(level, pos) ?: return InteractionResult.PASS
+        val storedItem = blockEntity.iotaStack
+
+        return if (storedItem.isNotEmpty) {
+            if (!level.isClientSide) {
+                player.setItemInHand(InteractionHand.MAIN_HAND, storedItem)
+                blockEntity.iotaStack = ItemStack.EMPTY
+                blockEntity.sync()
+            }
+            InteractionResult.sidedSuccess(level.isClientSide)
+        } else {
             InteractionResult.PASS
         }
     }
 
-    override fun playerWillDestroy(level: Level, pos: BlockPos, state: BlockState, player: Player) {
+    override fun playerWillDestroy(level: Level, pos: BlockPos, state: BlockState, player: Player): BlockState {
         // if broken in creative, drop with contents
         getBlockEntity(level, pos)?.let { blockEntity ->
             if (!level.isClientSide && !blockEntity.isEmpty && player.isCreative) {
                 val stack = ItemStack(this)
-                blockEntity.saveToItem(stack)
+                blockEntity.saveToItem(stack, level.registryAccess())
                 ItemEntity(level, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, stack).run {
                     setDefaultPickUpDelay()
                     level.addFreshEntity(this)
                 }
             }
         }
-        super.playerWillDestroy(level, pos, state, player)
+        return super.playerWillDestroy(level, pos, state, player)
     }
 
-    override fun getCloneItemStack(level: BlockGetter, pos: BlockPos, state: BlockState): ItemStack {
+    override fun getCloneItemStack(level: LevelReader, pos: BlockPos, state: BlockState): ItemStack {
         val stack = super.getCloneItemStack(level, pos, state)
-        getBlockEntity(level, pos)?.saveToItem(stack)
+        getBlockEntity(level, pos)?.saveToItem(stack, level.registryAccess())
         return stack
     }
 
@@ -116,7 +144,7 @@ class FocusHolderBlock(properties: Properties) : BaseEntityBlock(properties) {
         }
 
         val stack = ItemStack(this)
-        blockEntity.saveToItem(stack)
+        blockEntity.saveToItem(stack, params.level.registryAccess())
         return mutableListOf(stack)
     }
 
@@ -126,6 +154,7 @@ class FocusHolderBlock(properties: Properties) : BaseEntityBlock(properties) {
         getBlockEntity(level, pos)?.analogOutputSignal ?: 0
 
     companion object {
+        val CODEC: MapCodec<FocusHolderBlock> = simpleCodec(::FocusHolderBlock)
         val HAS_ITEM: BooleanProperty = BooleanProperty.create("has_item")
 
         fun getBlockEntity(level: BlockGetter, pos: BlockPos) = level.getBlockEntity(pos) as? FocusHolderBlockEntity

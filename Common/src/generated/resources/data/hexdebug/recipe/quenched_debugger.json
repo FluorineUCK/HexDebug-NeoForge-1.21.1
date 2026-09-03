@@ -1,0 +1,22 @@
+{
+  "type": "hexdebug:flyswatter_quenching",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "hexdebug:debugger"
+    },
+    "Q": {
+      "item": "hexcasting:quenched_allay_shard"
+    }
+  },
+  "pattern": [
+    " Q ",
+    "QFQ",
+    " Q "
+  ],
+  "result": {
+    "count": 1,
+    "id": "hexdebug:quenched_debugger"
+  },
+  "show_notification": true
+}

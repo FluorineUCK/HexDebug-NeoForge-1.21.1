@@ -8,6 +8,8 @@ import gay.`object`.hexdebug.HexDebug
 import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaRenderer
 import gay.`object`.hexdebug.api.client.splicing.SplicingTableIotaRenderers
 import gay.`object`.hexdebug.api.splicing.SplicingTableIotaClientView
+import gay.`object`.hexdebug.hexcompat.iotaTypeFromTag
+import gay.`object`.hexdebug.hexcompat.typeName
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.network.chat.Component
 import java.util.*
@@ -59,7 +61,7 @@ abstract class BaseIotaButton(x: Int, y: Int) : HexagonButton(
         // don't enable the button or display anything if this index is out of range
         val iotaView = iotaView ?: return
 
-        val iotaType = IotaType.getTypeFromTag(iotaView.tag) ?: HexIotaTypes.GARBAGE
+        val iotaType = iotaTypeFromTag(iotaView.tag) ?: HexIotaTypes.GARBAGE.get()
 
         active = true
 

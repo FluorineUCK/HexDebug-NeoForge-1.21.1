@@ -1,6 +1,6 @@
 package gay.`object`.hexdebug
 
-import at.petrak.hexcasting.api.casting.iota.IotaType
+import at.petrak.hexcasting.api.casting.iota.Iota
 import at.petrak.hexcasting.api.client.ScryingLensOverlayRegistry
 import at.petrak.hexcasting.api.utils.asTextComponent
 import at.petrak.hexcasting.api.utils.gray
@@ -58,7 +58,7 @@ object HexDebugClient {
                 lines += getItemLine(iotaStack)
 
                 // contained iota, if any
-                readIotaTag()?.let {
+                readIota()?.let {
                     lines += getIotaLine(Items.PAPER, it)
                 }
             }
@@ -68,16 +68,16 @@ object HexDebugClient {
     private fun getItemLine(stack: ItemStack) = MojangPair(stack, stack.styledHoverName)
 
     @Suppress("SameParameterValue")
-    private fun getIotaLine(item: Item, tag: CompoundTag) = getIotaLine(ItemStack(item), tag)
+    private fun getIotaLine(item: Item, iota: Iota) = getIotaLine(ItemStack(item), iota)
 
-    private fun getIotaLine(stack: ItemStack, tag: CompoundTag): ScryingLensLine {
+    private fun getIotaLine(stack: ItemStack, iota: Iota): ScryingLensLine {
         val mc = Minecraft.getInstance()
         val font = mc.font
 
         // see HexAdditionalRenderers
         val maxWidth = (mc.window.guiScaledWidth / 2f * 0.8f).toInt()
 
-        val fullDisplay = IotaType.getDisplay(tag)
+        val fullDisplay = iota.display()
         val displayLines = font.splitter.splitLines(fullDisplay, maxWidth, Style.EMPTY)
 
         val truncatedDisplay = Component.empty()

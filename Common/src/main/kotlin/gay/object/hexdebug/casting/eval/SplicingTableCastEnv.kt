@@ -22,7 +22,7 @@ class SplicingTableCastEnv(
     caster: ServerPlayer,
     private val table: SplicingTableBlockEntity,
 ) : PlayerBasedCastEnv(caster, InteractionHand.MAIN_HAND) {
-    private var sound = HexEvalSounds.NOTHING
+    private var sound = HexEvalSounds.NOTHING.get()
 
     val blockPos: BlockPos get() = table.blockPos
 
@@ -70,7 +70,7 @@ class SplicingTableCastEnv(
             sentinel != null
             && sentinel.extendsRange()
             && caster.level().dimension() == sentinel.dimension()
-            && isVecInRadius(vec, sentinel.position, SENTINEL_RADIUS)
+            && isVecInRadius(vec, sentinel.position, DEFAULT_SENTINEL_RADIUS)
         ) {
             return true
         }

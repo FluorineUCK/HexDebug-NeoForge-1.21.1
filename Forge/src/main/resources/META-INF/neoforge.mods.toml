@@ -1,0 +1,63 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "hexdebug"
+version = "${modVersion}"
+displayName = "HexDebug"
+logoFile = "icon.png"
+authors = "object-Object"
+description = "A Hex Casting addon for debugging and editing hexes."
+
+[[mixins]]
+config = "hexdebug-common.mixins.json"
+
+[[dependencies.hexdebug]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${versions.neoforge_dependency},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${versions.minecraft},1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "architectury"
+type = "required"
+versionRange = "[${versions.architectury},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "kotlinforforge"
+type = "required"
+versionRange = "[${versions.kotlin_forge},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "cloth_config"
+type = "required"
+versionRange = "[${versions.clothConfig},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "hexcasting"
+type = "required"
+versionRange = "[0.12.0-devel-pre-35,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.hexdebug]]
+modId = "emi"
+type = "optional"
+versionRange = "[${versions.emi},)"
+ordering = "NONE"
+side = "CLIENT"

@@ -1,39 +1,37 @@
 package gay.`object`.hexdebug.recipes
 
-import com.google.gson.JsonObject
+import com.mojang.serialization.MapCodec
 import gay.`object`.hexdebug.registry.HexDebugItems
 import gay.`object`.hexdebug.registry.HexDebugRecipeSerializers
-import net.minecraft.core.NonNullList
-import net.minecraft.core.RegistryAccess
-import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.resources.ResourceLocation
-import net.minecraft.world.inventory.CraftingContainer
+import net.minecraft.core.HolderLookup
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.CraftingBookCategory
-import net.minecraft.world.item.crafting.Ingredient
+import net.minecraft.world.item.crafting.CraftingInput
+import net.minecraft.world.item.crafting.RecipeSerializer
 import net.minecraft.world.item.crafting.ShapedRecipe
+import net.minecraft.world.item.crafting.ShapedRecipePattern
+import java.util.Optional
 
 class FlyswatterQuenchingShapedRecipe(
-    id: ResourceLocation,
     group: String,
     category: CraftingBookCategory,
-    width: Int,
-    height: Int,
-    recipeItems: NonNullList<Ingredient>,
+    pattern: net.minecraft.world.item.crafting.ShapedRecipePattern,
     result: ItemStack,
     showNotification: Boolean,
-) : ShapedRecipe(id, group, category, width, height, recipeItems, result, showNotification) {
-    override fun assemble(container: CraftingContainer, registryAccess: RegistryAccess): ItemStack {
+) : ShapedRecipe(group, category, pattern, result, showNotification) {
+    override fun assemble(input: CraftingInput, registries: HolderLookup.Provider): ItemStack {
         var original: ItemStack? = null
-        for (stack in container.items) {
+        for (stack in input.items()) {
             if (stack.`is`(HexDebugItems.DEBUGGER.value) || stack.`is`(HexDebugItems.EVALUATOR.value)) {
                 original = stack
                 break
             }
         }
 
-        return super.assemble(container, registryAccess).also {
-            it.tag = original?.tag?.copy()
+        return super.assemble(input, registries).also {
+            original?.componentsPatch?.let(it::applyComponents)
         }
     }
 
@@ -42,28 +40,31 @@ class FlyswatterQuenchingShapedRecipe(
     companion object {
         private fun fromShapedRecipe(recipe: ShapedRecipe): FlyswatterQuenchingShapedRecipe {
             return recipe.run {
-                @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS") // lie
                 FlyswatterQuenchingShapedRecipe(
-                    id = id,
                     group = group,
                     category = category(),
-                    width = width,
-                    height = height,
-                    recipeItems = ingredients,
-                    result = getResultItem(null),
+                    pattern = patternFrom(recipe),
+                    result = getResultItem(net.minecraft.core.RegistryAccess.EMPTY),
                     showNotification = showNotification(),
                 )
             }
         }
+
+        private fun patternFrom(recipe: ShapedRecipe) =
+            ShapedRecipePattern(recipe.width, recipe.height, recipe.ingredients, Optional.empty())
     }
 
-    class Serializer : ShapedRecipe.Serializer() {
-        override fun fromJson(recipeId: ResourceLocation, json: JsonObject): ShapedRecipe {
-            return fromShapedRecipe(super.fromJson(recipeId, json))
-        }
+    class Serializer : RecipeSerializer<FlyswatterQuenchingShapedRecipe> {
+        override fun codec(): MapCodec<FlyswatterQuenchingShapedRecipe> = CODEC
 
-        override fun fromNetwork(recipeId: ResourceLocation, buf: FriendlyByteBuf): ShapedRecipe {
-            return fromShapedRecipe(super.fromNetwork(recipeId, buf))
+        override fun streamCodec(): StreamCodec<RegistryFriendlyByteBuf, FlyswatterQuenchingShapedRecipe> = STREAM_CODEC
+
+        companion object {
+            val CODEC: MapCodec<FlyswatterQuenchingShapedRecipe> =
+                ShapedRecipe.Serializer.CODEC.xmap(::fromShapedRecipe) { it }
+
+            val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FlyswatterQuenchingShapedRecipe> =
+                ShapedRecipe.Serializer.STREAM_CODEC.map(::fromShapedRecipe) { it }
         }
     }
 }

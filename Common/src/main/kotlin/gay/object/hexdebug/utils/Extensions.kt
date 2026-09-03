@@ -3,21 +3,25 @@ package gay.`object`.hexdebug.utils
 import at.petrak.hexcasting.api.HexAPI
 import at.petrak.hexcasting.api.casting.PatternShapeMatch
 import at.petrak.hexcasting.api.casting.eval.CastingEnvironment
-import at.petrak.hexcasting.api.casting.eval.SpecialPatterns
 import at.petrak.hexcasting.api.casting.iota.*
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import at.petrak.hexcasting.api.casting.mishaps.MishapInvalidIota
 import at.petrak.hexcasting.api.casting.mishaps.MishapNotEnoughArgs
 import at.petrak.hexcasting.api.utils.*
 import at.petrak.hexcasting.common.casting.PatternRegistryManifest
+import at.petrak.hexcasting.common.lib.HexRegistries
+import at.petrak.hexcasting.common.lib.hex.HexActions
 import at.petrak.hexcasting.xplat.IXplatAbstractions
 import gay.`object`.hexdebug.api.splicing.SplicingTableIotaClientView
 import net.minecraft.commands.arguments.NbtPathArgument.NbtPath
 import net.minecraft.core.Registry
+import net.minecraft.core.component.DataComponents
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NumericTag
 import net.minecraft.nbt.StringTag
 import net.minecraft.nbt.Tag
 import net.minecraft.network.chat.*
+import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.Container
@@ -25,6 +29,7 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.properties.Property
 import java.awt.Color
@@ -76,8 +81,27 @@ val ItemStack.isNotEmpty get() = !isEmpty
 
 val ItemStack.styledHoverName: Component get() = Component.empty()
     .append(hoverName)
-    .withStyle(rarity.color)
-    .also { if (hasCustomHoverName()) it.italic }
+    .withStyle(rarity.color())
+    .also { if (has(DataComponents.CUSTOM_NAME)) it.italic }
+
+fun ItemStack.getCustomTag(): CompoundTag? =
+    get(DataComponents.CUSTOM_DATA)?.copyTag()
+
+fun ItemStack.updateCustomTag(update: (CompoundTag) -> Unit) {
+    CustomData.update(DataComponents.CUSTOM_DATA, this) { update(it) }
+}
+
+fun ItemStack.getBoolean(key: String, defaultExpected: Boolean = false): Boolean =
+    getCustomTag()?.getBoolean(key) ?: defaultExpected
+
+fun ItemStack.putBoolean(key: String, value: Boolean) =
+    updateCustomTag { it.putBoolean(key, value) }
+
+fun ItemStack.getInt(key: String, defaultExpected: Int = 0): Int =
+    getCustomTag()?.getInt(key) ?: defaultExpected
+
+fun ItemStack.putInt(key: String, value: Int) =
+    updateCustomTag { it.putInt(key, value) }
 
 // text
 
@@ -145,8 +169,8 @@ fun Iota.toHexpatternSource(env: CastingEnvironment, wrapEmbedded: Boolean = tru
         is PatternIota -> {
             // don't wrap known patterns in angled brackets
             when (pattern.angles) {
-                SpecialPatterns.INTROSPECTION.angles -> "{"
-                SpecialPatterns.RETROSPECTION.angles -> "}"
+                HexActions.OPEN_PAREN.value().prototype.angles -> "{"
+                HexActions.CLOSE_PAREN.value().prototype.angles -> "}"
                 else -> pattern.getI18nOrNull(env)?.string
             }?.let { return it }
             // but do wrap unknown ones
@@ -177,19 +201,22 @@ fun List<SplicingTableIotaClientView>.toHexpatternSource(): String {
 
 fun HexPattern.getI18nOrNull(env: CastingEnvironment): Component? {
     val hexAPI = HexAPI.instance()
-    return when (val lookup = PatternRegistryManifest.matchPattern(this, env, false)) {
+    return when (val lookup = PatternRegistryManifest.matchPattern(this, env)) {
         is PatternShapeMatch.Normal -> hexAPI.getActionI18n(lookup.key, false)
         is PatternShapeMatch.PerWorld -> hexAPI.getActionI18n(lookup.key, true)
         is PatternShapeMatch.Special -> lookup.handler.name
         is PatternShapeMatch.Nothing -> {
             val path = when (this.angles) {
-                SpecialPatterns.INTROSPECTION.angles -> "open_paren"
-                SpecialPatterns.RETROSPECTION.angles -> "close_paren"
-                SpecialPatterns.CONSIDERATION.angles -> "escape"
-                SpecialPatterns.EVANITION.angles -> "undo"
+                HexActions.OPEN_PAREN.value().prototype.angles -> "open_paren"
+                HexActions.CLOSE_PAREN.value().prototype.angles -> "close_paren"
+                HexActions.ESCAPE.value().prototype.angles -> "escape"
+                HexActions.UNDO.value().prototype.angles -> "undo"
                 else -> return null
             }
-            hexAPI.getRawHookI18n(HexAPI.modLoc(path))
+            hexAPI.getActionI18n(
+                ResourceKey.create(HexRegistries.ACTION, HexAPI.modLoc(path)),
+                false,
+            )
         }
     }
 }
@@ -215,7 +242,7 @@ val Color.falpha get() = alpha.toFloat() / 255f
 
 val ServerPlayer.isEnlightened get(): Boolean {
     return serverLevel().server.advancements
-        .getAdvancement(HexAPI.modLoc("enlightenment"))
+        .get(HexAPI.modLoc("enlightenment"))
         ?.let { advancements.getOrStartProgress(it).isDone }
         ?: false
 }

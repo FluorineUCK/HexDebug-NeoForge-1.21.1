@@ -6,7 +6,6 @@ import gay.`object`.hexdebug.items.EvaluatorItem
 import gay.`object`.hexdebug.items.base.ItemPredicateProvider
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
-import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Item.Properties
 import net.minecraft.world.item.Rarity
@@ -15,12 +14,12 @@ import net.minecraft.world.level.ItemLike
 object HexDebugItems : HexDebugRegistrar<Item>(Registries.ITEM, { BuiltInRegistries.ITEM }) {
     @JvmField
     val DEBUGGER = item("debugger") {
-        DebuggerItem(unstackable.rarity(Rarity.UNCOMMON).noTab(), isQuenched = false)
+        DebuggerItem(unstackable.rarity(Rarity.UNCOMMON), isQuenched = false)
     }
 
     @JvmField
     val QUENCHED_DEBUGGER = item("quenched_debugger") {
-        DebuggerItem(unstackable.rarity(Rarity.RARE).noTab(), isQuenched = true)
+        DebuggerItem(unstackable.rarity(Rarity.RARE), isQuenched = true)
     }
 
     @JvmField
@@ -33,11 +32,9 @@ object HexDebugItems : HexDebugRegistrar<Item>(Registries.ITEM, { BuiltInRegistr
         EvaluatorItem(unstackable.rarity(Rarity.RARE), isQuenched = true)
     }
 
-    val props: Properties get() = Properties().`arch$tab`(HexDebugCreativeTabs.HEX_DEBUG.key)
+    val props: Properties get() = Properties()
 
     private val unstackable get() = props.stacksTo(1)
-
-    private fun Properties.noTab() = this.`arch$tab`(null as CreativeModeTab?)
 
     override fun initClient() {
         registerItemProperties()

@@ -22,7 +22,7 @@ object HexDebugEmiPlugin {
         // show filled focus holder in sidebar
         registry.addEmiStack(EmiStack.of(
             ItemStack(HexDebugBlocks.FOCUS_HOLDER)
-                .setIotaStack(ItemStack(HexItems.FOCUS))
+                .setIotaStack(ItemStack(HexItems.FOCUS.get()))
         ))
 
         // screen exclusions for splicing table

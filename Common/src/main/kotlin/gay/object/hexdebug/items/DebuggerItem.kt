@@ -13,28 +13,33 @@ import gay.`object`.hexdebug.core.api.debugging.env.SimplePlayerBasedDebugEnv
 import gay.`object`.hexdebug.core.api.exceptions.DebugException
 import gay.`object`.hexdebug.items.base.*
 import gay.`object`.hexdebug.utils.asItemPredicate
+import gay.`object`.hexdebug.utils.getBoolean
+import gay.`object`.hexdebug.utils.getInt
 import gay.`object`.hexdebug.utils.getWrapping
 import gay.`object`.hexdebug.utils.otherHand
+import gay.`object`.hexdebug.utils.putBoolean
+import gay.`object`.hexdebug.utils.putInt
 import gay.`object`.hexdebug.utils.styledHoverName
 import net.minecraft.client.player.LocalPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.core.registries.Registries
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.InteractionResultHolder
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Rarity
 import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.item.enchantment.EnchantmentHelper
 import net.minecraft.world.item.enchantment.Enchantments
 import net.minecraft.world.level.Level
 import org.eclipse.lsp4j.debug.*
-import kotlin.math.max
 
 class DebuggerItem(
     properties: Properties,
@@ -48,21 +53,26 @@ class DebuggerItem(
 
     override fun isFoil(stack: ItemStack) = false
 
-    override fun getRarity(stack: ItemStack) = if (isQuenched) Rarity.RARE else Rarity.UNCOMMON
-
-    override fun getDefaultInstance() = applyDefaults(ItemStack(this))
-
-    // TODO: this doesn't give the advancement until after it's taken out of the table
     override fun onCraftedBy(stack: ItemStack, level: Level, player: Player) {
-        applyDefaults(stack)
+        applyDefaults(stack, level)
+        super.onCraftedBy(stack, level, player)
     }
 
-    private fun applyDefaults(stack: ItemStack) = stack.also {
-        val enchantments = EnchantmentHelper.getEnchantments(stack)
-        enchantments.compute(Enchantments.BANE_OF_ARTHROPODS) { _, level ->
-            max(level ?: 0, if (isQuenched) 2 else 1)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        if (!level.isClientSide) {
+            applyDefaults(stack, level)
         }
-        EnchantmentHelper.setEnchantments(enchantments, stack)
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+    }
+
+    private fun applyDefaults(stack: ItemStack, level: Level) {
+        val bane = level.registryAccess()
+            .registryOrThrow(Registries.ENCHANTMENT)
+            .getHolderOrThrow(Enchantments.BANE_OF_ARTHROPODS)
+        val minimumLevel = if (isQuenched) 2 else 1
+        if (EnchantmentHelper.getItemEnchantmentLevel(bane, stack) < minimumLevel) {
+            EnchantmentHelper.updateEnchantments(stack) { it.upgrade(bane, minimumLevel) }
+        }
     }
 
     override fun useOn(context: UseOnContext): InteractionResult {
@@ -84,7 +94,7 @@ class DebuggerItem(
         }
 
         return debuggable.startDebugging(context, threadId).also {
-            if (it.shouldAwardStats()) {
+            if (it.consumesAction()) {
                 val stat = Stats.ITEM_USED[this]
                 player.awardStat(stat)
             }
@@ -153,7 +163,7 @@ class DebuggerItem(
                 getHex(stack, serverLevel) ?: return InteractionResultHolder.fail(stack)
             } else {
                 val datumHolder = IXplatAbstractions.INSTANCE.findDataHolder(player.getItemInHand(usedHand.otherHand))
-                when (val iota = datumHolder?.readIota(serverLevel)) {
+                when (val iota = datumHolder?.readIota()) {
                     is ListIota -> iota.list.toList()
                     else -> null
                 }
@@ -191,14 +201,14 @@ class DebuggerItem(
 
     override fun appendHoverText(
         stack: ItemStack,
-        level: Level?,
+        context: Item.TooltipContext,
         tooltipComponents: MutableList<Component>,
         isAdvanced: TooltipFlag,
     ) {
         if (isQuenched) {
             tooltipComponents.add(displayThread(null, getThreadId(stack)))
         }
-        super.appendHoverText(stack, level, tooltipComponents, isAdvanced)
+        super.appendHoverText(stack, context, tooltipComponents, isAdvanced)
     }
 
     // always allow shift, only allow ctrl if quenched

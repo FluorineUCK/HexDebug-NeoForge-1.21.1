@@ -12,6 +12,7 @@ import gay.`object`.hexdebug.utils.isIotaHolder
 import gay.`object`.hexdebug.utils.isNotEmpty
 import gay.`object`.hexdebug.utils.setPropertyIfChanged
 import net.minecraft.core.BlockPos
+import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.ContainerHelper
 import net.minecraft.world.item.ItemStack
@@ -29,16 +30,16 @@ class FocusHolderBlockEntity(pos: BlockPos, state: BlockState) :
 
     val analogOutputSignal get() = if (isEmpty) 0 else 15
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, provider: HolderLookup.Provider) {
         stacks.clear() // without this, removing the item on the server doesn't remove it on the client
-        ContainerHelper.loadAllItems(tag, stacks)
+        ContainerHelper.loadAllItems(tag, stacks, provider)
     }
 
-    override fun saveModData(tag: CompoundTag) {
-        ContainerHelper.saveAllItems(tag, stacks)
+    override fun saveModData(tag: CompoundTag, provider: HolderLookup.Provider) {
+        ContainerHelper.saveAllItems(tag, stacks, provider)
     }
 
-    override fun readIotaTag() = iotaHolder?.readIotaTag()
+    override fun readIota() = iotaHolder?.readIota()
 
     override fun writeIota(iota: Iota?, simulate: Boolean): Boolean {
         val success = iotaHolder?.writeIota(iota, simulate) ?: false

@@ -183,3 +183,32 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+# NeoForge pre39 publication exclusions
+.gradle/
+.gradle-user-home/
+.gradle-tmp/
+.bounded-gradle/
+.idea/
+.kotlin/
+.maven-artifacts/
+**/build/
+run/
+run-client/
+run-server/
+runs/
+logs/
+build-logs/
+cache/
+caches/
+scratch/
+libs/
+crash-reports/
+*.log
+*.class
+*.tmp
+*.bak
+*.lock
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+hs_err_pid*

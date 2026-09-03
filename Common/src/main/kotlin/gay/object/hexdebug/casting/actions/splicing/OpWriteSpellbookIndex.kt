@@ -8,10 +8,9 @@ import at.petrak.hexcasting.api.casting.eval.CastingEnvironment
 import at.petrak.hexcasting.api.casting.getBlockPos
 import at.petrak.hexcasting.api.casting.getIntBetween
 import at.petrak.hexcasting.api.casting.iota.Iota
-import at.petrak.hexcasting.api.utils.getCompound
-import at.petrak.hexcasting.api.utils.getString
-import at.petrak.hexcasting.api.utils.putInt
 import at.petrak.hexcasting.common.items.storage.ItemSpellbook
+import at.petrak.hexcasting.common.lib.HexDataComponents
+import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.Component
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.phys.Vec3
@@ -38,16 +37,16 @@ class OpWriteSpellbookIndex(private val useListItem: Boolean) : SpellAction {
     private data class Spell(val blockEntity: HexBlockEntity, val stack: ItemStack, val index: Int) : RenderedSpell {
         override fun cast(env: CastingEnvironment) {
             // copied from ItemSpellbook.rotatePageIdx with modifications
-            stack.putInt(ItemSpellbook.TAG_SELECTED_PAGE, index)
+            stack.set(HexDataComponents.SELECTED_SPELLBOOK_PAGE.get(), index)
 
-            val names = stack.getCompound(ItemSpellbook.TAG_PAGE_NAMES)
+            val names = stack.getOrDefault(HexDataComponents.SPELLBOOK_PAGE_NAMES.get(), emptyMap<String, Component>())
             val shiftedIndex = max(1, index)
             val nameKey = shiftedIndex.toString()
-            val name = names.getString(nameKey)
+            val name = names[nameKey]
             if (name != null) {
-                stack.setHoverName(Component.Serializer.fromJson(name))
+                stack.set(DataComponents.CUSTOM_NAME, name)
             } else {
-                stack.resetHoverName()
+                stack.remove(DataComponents.CUSTOM_NAME)
             }
 
             blockEntity.sync()

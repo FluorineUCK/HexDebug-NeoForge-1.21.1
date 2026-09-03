@@ -20,7 +20,7 @@ object OpReadClipboard : ConstMediaAction {
         val clipboardHolder = table.clipboardHolder
             ?: throw MishapBadBlock.of(pos, "splicing_table.clipboard.read")
 
-        val datum = clipboardHolder.readIota(env.world)
+        val datum = clipboardHolder.readIota()
             ?: clipboardHolder.emptyIota()
             ?: throw MishapBadBlock.of(pos, "splicing_table.clipboard.read")
 

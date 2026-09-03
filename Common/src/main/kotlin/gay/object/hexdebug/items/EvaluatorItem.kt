@@ -18,6 +18,7 @@ import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.level.Level
@@ -33,7 +34,7 @@ class EvaluatorItem(
 
         if (world.isClientSide) {
             if (player.isShiftKeyDown && evalStates[threadId] == EvalState.MODIFIED) {
-                player.playSound(HexSounds.STAFF_RESET, 1f, 1f)
+                player.playSound(HexSounds.STAFF_RESET.value(), 1f, 1f)
             }
             return InteractionResultHolder.success(itemStack)
         }
@@ -86,14 +87,14 @@ class EvaluatorItem(
 
     override fun appendHoverText(
         stack: ItemStack,
-        level: Level?,
+        context: Item.TooltipContext,
         tooltipComponents: MutableList<Component>,
         isAdvanced: TooltipFlag,
     ) {
         if (isQuenched) {
             tooltipComponents.add(displayThread(null, getThreadId(stack)))
         }
-        super.appendHoverText(stack, level, tooltipComponents, isAdvanced)
+        super.appendHoverText(stack, context, tooltipComponents, isAdvanced)
     }
 
     // only allow shift+ctrl scrolling, and only if it's quenched

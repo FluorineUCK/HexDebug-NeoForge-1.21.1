@@ -1,35 +1,33 @@
 package gay.`object`.hexdebug.recipes
 
-import com.google.gson.JsonObject
+import com.mojang.serialization.MapCodec
+import com.mojang.serialization.codecs.RecordCodecBuilder
 import gay.`object`.hexdebug.items.FocusHolderBlockItem.Companion.hasIotaStack
 import gay.`object`.hexdebug.items.FocusHolderBlockItem.Companion.setIotaStack
 import gay.`object`.hexdebug.registry.HexDebugBlocks
 import gay.`object`.hexdebug.registry.HexDebugRecipeSerializers
-import net.minecraft.core.NonNullList
-import net.minecraft.network.FriendlyByteBuf
-import net.minecraft.resources.ResourceLocation
-import net.minecraft.util.GsonHelper
-import net.minecraft.world.inventory.CraftingContainer
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.CraftingBookCategory
-import net.minecraft.world.item.crafting.Ingredient
+import net.minecraft.world.item.crafting.CraftingInput
+import net.minecraft.world.item.crafting.RecipeSerializer
 import net.minecraft.world.item.crafting.ShapedRecipe
+import net.minecraft.world.item.crafting.ShapedRecipePattern
 import net.minecraft.world.level.Level
+import java.util.Optional
 
 class FocusHolderFillingShapedRecipe(
-    id: ResourceLocation,
     group: String,
     category: CraftingBookCategory,
-    width: Int,
-    height: Int,
-    recipeItems: NonNullList<Ingredient>,
+    pattern: net.minecraft.world.item.crafting.ShapedRecipePattern,
     result: ItemStack,
     val resultInner: ItemStack,
     showNotification: Boolean,
-) : ShapedRecipe(id, group, category, width, height, recipeItems, result, showNotification) {
-    override fun matches(container: CraftingContainer, level: Level): Boolean {
-        if (!super.matches(container, level)) return false
-        for (ingredient in container.items) {
+) : ShapedRecipe(group, category, pattern, result, showNotification) {
+    override fun matches(input: CraftingInput, level: Level): Boolean {
+        if (!super.matches(input, level)) return false
+        for (ingredient in input.items()) {
             // don't allow filling a holder that's already filled
             if (ingredient.`is`(HexDebugBlocks.FOCUS_HOLDER.item) && ingredient.hasIotaStack) {
                 return false
@@ -44,36 +42,40 @@ class FocusHolderFillingShapedRecipe(
         private fun fromShapedRecipe(recipe: ShapedRecipe, resultInner: ItemStack): FocusHolderFillingShapedRecipe {
             return recipe.run {
                 FocusHolderFillingShapedRecipe(
-                    id = id,
                     group = group,
                     category = category(),
-                    width = width,
-                    height = height,
-                    recipeItems = ingredients,
+                    pattern = patternFrom(recipe),
                     result = ItemStack(HexDebugBlocks.FOCUS_HOLDER.item).setIotaStack(resultInner),
                     resultInner = resultInner,
                     showNotification = showNotification(),
                 )
             }
         }
+
+        private fun patternFrom(recipe: ShapedRecipe) =
+            ShapedRecipePattern(recipe.width, recipe.height, recipe.ingredients, Optional.empty())
     }
 
-    class Serializer : ShapedRecipe.Serializer() {
-        override fun fromJson(recipeId: ResourceLocation, json: JsonObject): ShapedRecipe {
-            val recipe = super.fromJson(recipeId, json)
-            val resultInner = itemStackFromJson(GsonHelper.getAsJsonObject(json, "result_inner"))
-            return fromShapedRecipe(recipe, resultInner)
-        }
+    class Serializer : RecipeSerializer<FocusHolderFillingShapedRecipe> {
+        override fun codec(): MapCodec<FocusHolderFillingShapedRecipe> = CODEC
 
-        override fun fromNetwork(recipeId: ResourceLocation, buf: FriendlyByteBuf): ShapedRecipe {
-            val recipe = super.fromNetwork(recipeId, buf)
-            val resultInner = buf.readItem()
-            return fromShapedRecipe(recipe, resultInner)
-        }
+        override fun streamCodec(): StreamCodec<RegistryFriendlyByteBuf, FocusHolderFillingShapedRecipe> = STREAM_CODEC
 
-        override fun toNetwork(buf: FriendlyByteBuf, recipe: ShapedRecipe) {
-            super.toNetwork(buf, recipe)
-            buf.writeItem((recipe as FocusHolderFillingShapedRecipe).resultInner)
+        companion object {
+            val CODEC: MapCodec<FocusHolderFillingShapedRecipe> = RecordCodecBuilder.mapCodec { instance ->
+                instance.group(
+                    ShapedRecipe.Serializer.CODEC.forGetter<FocusHolderFillingShapedRecipe> { it },
+                    ItemStack.STRICT_CODEC.fieldOf("result_inner").forGetter(FocusHolderFillingShapedRecipe::resultInner),
+                ).apply(instance, ::fromShapedRecipe)
+            }
+
+            val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, FocusHolderFillingShapedRecipe> = StreamCodec.composite(
+                ShapedRecipe.Serializer.STREAM_CODEC,
+                { recipe: FocusHolderFillingShapedRecipe -> recipe },
+                ItemStack.STREAM_CODEC,
+                FocusHolderFillingShapedRecipe::resultInner,
+                ::fromShapedRecipe,
+            )
         }
     }
 }

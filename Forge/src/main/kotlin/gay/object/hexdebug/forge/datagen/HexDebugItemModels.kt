@@ -12,9 +12,9 @@ import gay.`object`.hexdebug.registry.HexDebugItems
 import gay.`object`.hexdebug.utils.asItemPredicate
 import net.minecraft.data.PackOutput
 import net.minecraft.resources.ResourceLocation
-import net.minecraftforge.client.model.generators.ItemModelProvider
-import net.minecraftforge.client.model.generators.ModelBuilder
-import net.minecraftforge.common.data.ExistingFileHelper
+import net.neoforged.neoforge.client.model.generators.ItemModelProvider
+import net.neoforged.neoforge.client.model.generators.ModelBuilder
+import net.neoforged.neoforge.common.data.ExistingFileHelper
 
 class HexDebugItemModels(output: PackOutput, efh: ExistingFileHelper) : ItemModelProvider(output, HexDebug.MODID, efh) {
     override fun registerModels() {

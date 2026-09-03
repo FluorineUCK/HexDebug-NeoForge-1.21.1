@@ -19,11 +19,21 @@ import java.util.function.Predicate
  * This is only used for looking up and localizing patterns.
  */
 class FakeCastEnv(level: ServerLevel) : CastingEnvironment(level) {
+    private val noOpMishapEnvironment = object : MishapEnvironment(level, null) {
+        override fun yeetHeldItemsTowards(target: Vec3) {}
+        override fun dropHeldItems() {}
+        override fun drown() {}
+        override fun damage(amount: Float) {}
+        override fun removeXp(amount: Int) {}
+        override fun blind(duration: Int) {}
+        override fun nauseate(duration: Int) {}
+    }
+
     override fun getCastingEntity(): LivingEntity? = null
 
-    override fun getMishapEnvironment(): MishapEnvironment = TODO()
+    override fun getMishapEnvironment(): MishapEnvironment = noOpMishapEnvironment
 
-    override fun mishapSprayPos(): Vec3 = TODO()
+    override fun mishapSprayPos(): Vec3 = Vec3.ZERO
 
     override fun extractMediaEnvironment(cost: Long, simulate: Boolean): Long = cost
 

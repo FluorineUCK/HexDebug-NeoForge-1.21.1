@@ -50,9 +50,9 @@ open class SplicingTableData(
         undoStack,
         selection,
         viewStartIndex,
-        list = listHolder?.let { it.readIota(level) as? ListIota }?.list?.toMutableList(),
+        list = listHolder?.let { it.readIota() as? ListIota }?.list?.toMutableList(),
         listWriter = listHolder?.takeIfWritable(),
-        clipboard = clipboardHolder?.readIota(level),
+        clipboard = clipboardHolder?.readIota(),
         clipboardWriter = clipboardHolder?.takeIfWritable()
     )
 
@@ -132,7 +132,8 @@ open class SplicingTableData(
     fun isClipboardTransferSafe(value: Iota) = isClipboardTransferSafe(listOf(value))
 
     // prevent transfer if list contains someone else's truename
-    fun isClipboardTransferSafe(value: List<Iota>) = null == MishapOthersName.getTrueNameFromArgs(value, player)
+    fun isClipboardTransferSafe(value: List<Iota>) =
+        null == MishapOthersName.getTrueNameMishapFromArgs(level, value, player)
 
     companion object : SplicingTableDataConverter<SplicingTableData> {
         override fun test(view: SplicingTableClientView, selection: Selection?, viewStartIndex: Int) = true

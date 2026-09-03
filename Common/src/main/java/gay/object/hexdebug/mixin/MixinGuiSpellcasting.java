@@ -4,7 +4,6 @@ import at.petrak.hexcasting.api.casting.eval.ResolvedPattern;
 import at.petrak.hexcasting.api.casting.math.HexCoord;
 import at.petrak.hexcasting.api.casting.math.HexPattern;
 import at.petrak.hexcasting.client.gui.GuiSpellcasting;
-import at.petrak.hexcasting.common.msgs.IMessage;
 import at.petrak.hexcasting.common.msgs.MsgNewSpellPatternC2S;
 import at.petrak.hexcasting.xplat.IClientXplatAbstractions;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
@@ -13,6 +12,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import gay.object.hexdebug.gui.splicing.IMixinGuiSpellcasting;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,12 +61,12 @@ public abstract class MixinGuiSpellcasting implements IMixinGuiSpellcasting {
         method = "drawEnd",
         at = @At(
             value = "INVOKE",
-            target = "Lat/petrak/hexcasting/xplat/IClientXplatAbstractions;sendPacketToServer(Lat/petrak/hexcasting/common/msgs/IMessage;)V",
+            target = "Lat/petrak/hexcasting/xplat/IClientXplatAbstractions;sendPacketToServer(Lnet/minecraft/network/protocol/common/custom/CustomPacketPayload;)V",
             remap = false
         ),
         remap = false
     )
-    private boolean redirectSplicingTableStaffPacket$hexdebug(IClientXplatAbstractions instance, IMessage message) {
+    private boolean redirectSplicingTableStaffPacket$hexdebug(IClientXplatAbstractions instance, CustomPacketPayload message) {
         if (onDrawSplicingTablePattern$hexdebug != null && message instanceof MsgNewSpellPatternC2S newSpellPatternC2S) {
             onDrawSplicingTablePattern$hexdebug.accept(newSpellPatternC2S.pattern(), newSpellPatternC2S.resolvedPatterns().size() - 1);
             return false;

@@ -4,15 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Pydantic's HISTORY.md](https://github.com/pydantic/pydantic/blob/main/HISTORY.md), and this project *mostly* adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## `0.8.1+1.20.1` - 2026-07-08
+## `0.8.1+1.21.1` - 2026-07-16
 
 ### Changed
 
-- Updated the minimum Kotlin version to 2.2.21.
+- Updated the minimum Kotlin compiler version to 2.2.21 and Kotlin for Forge to 5.12.0.
 
 ### Fixed
 
-- Updated the bundled version of Ktor to 3.3.3 to fix an incompatibility with Kotlin 2.4.0 that caused VSCode to fail to connect to HexDebug's debug server. 
+- Updated the bundled version of Ktor to 3.3.3, carrying forward upstream HexDebug 0.8.1's fix for DAP clients failing to connect when Kotlin 2.4.0 is present.
+- Corrected the generated Cloth Config dependency range in NeoForge metadata.
+- Restricted the Minecraft dependency range to 1.21.1.
 
 ## `0.8.0+1.20.1` - 2025-11-07
 
