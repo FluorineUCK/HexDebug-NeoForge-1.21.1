@@ -1,0 +1,69 @@
+modid = "hexdebug"
+book = "hexcasting:thehexbook"
+default_lang = "en_us"
+default_branch = "main"
+
+resource_dirs = [  # top takes priority
+    "resources",
+    "{_common.src}/main/resources",
+    { path="{^_common.src}/generated/resources", required=false },
+    "{_fabric.src}/main/resources",
+    { path="{^_fabric.src}/generated/resources", required=false },
+    "{_forge.src}/main/resources",
+    { path="{^_forge.src}/generated/resources", required=false },
+    { modid="ioticblocks" },
+    { modid="hexcasting" },
+    { modid="minecraft" },
+    { modid="hexdoc" },
+]
+export_dir = "src/hexdoc_hexdebug/_export/generated"
+
+[textures]
+missing = [
+    "hexdebug:debugger/*",
+    "hexdebug:quenched_debugger/*",
+    "hexdebug:evaluator/*",
+    "hexdebug:quenched_evaluator/*",
+]
+
+[template]
+icon = "{^_common.src}/main/resources/icon.png"
+include = [
+    "hexdebug",
+    "hexcasting",
+    "hexdoc",
+]
+
+[template.args]
+mod_name = "HexDebug"
+author = "object-Object"
+show_landing_text = false
+
+[template.args.navbar]
+center = [
+    { text="API Docs", href="../api" },
+    { text="GitHub", href.variable="source_url" },
+]
+
+[extra.hexcasting]
+_pattern_regex = { "!Raw"='(?P<is_per_world>make|makePerWorld)\("(?P<name>[^"]+)",\s*HexDir\.(?P<startdir>\w+),\s*"(?P<signature>[qweasd]+)"' }
+_per_world_value = "makePerWorld"
+
+[[extra.hexcasting.pattern_stubs]]
+path = "{^^^_common.package}/registry/HexDebugActions.kt"
+regex = "{^_pattern_regex}"
+per_world_value = "{^_per_world_value}"
+
+# platforms
+
+[_common]
+src = "../Common/src"
+package = "{src}/main/kotlin/gay/object/hexdebug"
+
+[_fabric]
+src = "../Fabric/src"
+package = "{src}/main/kotlin/gay/object/hexdebug/fabric"
+
+[_forge]
+src = "../Forge/src"
+package = "{src}/main/kotlin/gay/object/hexdebug/forge"

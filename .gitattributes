@@ -1,2 +1,5 @@
 # avoid spurious diffs since datagen creates LF files
 generated/** text=auto eol=lf
+
+# Preserve original upstream documentation bytes.
+/upstream-docs/** -text

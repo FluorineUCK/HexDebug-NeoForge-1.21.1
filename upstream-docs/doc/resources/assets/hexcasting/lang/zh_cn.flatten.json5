@@ -1,0 +1,10 @@
+{
+  hexdoc: {
+    "hexdebug": {
+      title: "咒术调试之书",
+      description: "咒术调试之书，辑录合一。",
+    },
+  },
+
+  "block.hexdebug.focus_holder.full": "核心框架",
+}

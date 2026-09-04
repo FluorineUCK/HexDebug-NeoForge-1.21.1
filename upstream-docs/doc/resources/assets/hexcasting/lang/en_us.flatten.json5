@@ -1,0 +1,10 @@
+{
+  hexdoc: {
+    "hexdebug": {
+      title: "HexDebug Book",
+      description: "The HexDebug Book, all in one place.",
+    },
+  },
+
+  "block.hexdebug.focus_holder.full": "Focal Frame",
+}
